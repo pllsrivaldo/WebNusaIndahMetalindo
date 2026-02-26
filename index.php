@@ -177,6 +177,71 @@
         </div>
     </section>
 
+    <section id="rekomendasi-artikel" class="py-24 bg-white border-t border-gray-100">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="flex justify-between items-end mb-10 border-b-2 border-red-700 pb-4">
+                <div>
+                    <h2 class="text-3xl md:text-4xl font-black text-gray-900 uppercase tracking-tight">Edukasi & <span class="text-red-700">Inspirasi</span></h2>
+                    <p class="text-gray-500 mt-2 font-medium">Temukan panduan dan tips terbaik seputar konstruksi baja ringan.</p>
+                </div>
+                <a href="artikel.php" class="hidden md:inline-flex text-gray-900 font-bold hover:text-red-700 items-center transition">Lihat Semua Artikel <span class="ml-2">→</span></a>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <?php
+                // Ambil 4 artikel terbaru untuk dashboard (1 Besar, 3 Kecil)
+                $artikel_beranda = mysqli_query($conn, "SELECT * FROM artikel ORDER BY tanggal DESC LIMIT 4");
+                if(mysqli_num_rows($artikel_beranda) > 0) {
+                    $count = 0;
+                    while($a = mysqli_fetch_array($artikel_beranda)){
+                        $img_art = (strpos($a['gambar'], 'http') === 0) ? $a['gambar'] : 'assets/uploads/' . $a['gambar'];
+                        if(empty($a['gambar'])) $img_art = 'https://via.placeholder.com/800x500?text=No+Image';
+                        
+                        if($count == 0) {
+                            // Headline Besar (Kiri - Porsi 2 Kolom)
+                            ?>
+                            <div class="lg:col-span-2 group">
+                                <a href="detail.php?id=<?php echo $a['id']; ?>" class="block relative rounded-xl overflow-hidden shadow-md h-full min-h-[400px]">
+                                    <img src="<?php echo $img_art; ?>" alt="<?php echo htmlspecialchars($a['judul']); ?>" class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition duration-700">
+                                    <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent flex flex-col justify-end p-8">
+                                        <span class="bg-red-600 text-white text-xs font-bold px-3 py-1 rounded-sm uppercase tracking-widest w-fit mb-3">Artikel Pilihan</span>
+                                        <h3 class="text-3xl md:text-5xl font-black text-white mb-3 group-hover:text-red-300 transition leading-tight"><?php echo htmlspecialchars($a['judul']); ?></h3>
+                                        <p class="text-gray-300 text-sm font-medium">
+                                            <?php echo date('d F Y', strtotime($a['tanggal'])); ?>
+                                        </p>
+                                    </div>
+                                </a>
+                            </div>
+                            <div class="lg:col-span-1 flex flex-col gap-6">
+                            <?php
+                        } else {
+                            // List Artikel Kecil (Kanan - Porsi 1 Kolom)
+                            ?>
+                                <a href="detail.php?id=<?php echo $a['id']; ?>" class="group flex flex-row bg-white rounded-xl overflow-hidden hover:shadow-lg transition duration-300 border border-gray-100 h-full">
+                                    <div class="w-1/3 h-full min-h-[120px] bg-gray-200 overflow-hidden relative">
+                                        <img src="<?php echo $img_art; ?>" alt="<?php echo htmlspecialchars($a['judul']); ?>" class="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition duration-500">
+                                    </div>
+                                    <div class="w-2/3 p-5 flex flex-col justify-center">
+                                        <span class="text-xs font-bold text-red-600 mb-2 uppercase tracking-wider"><?php echo date('d M Y', strtotime($a['tanggal'])); ?></span>
+                                        <h3 class="text-sm md:text-base font-bold text-gray-900 leading-snug group-hover:text-red-700 transition" style="display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;"><?php echo htmlspecialchars($a['judul']); ?></h3>
+                                    </div>
+                                </a>
+                            <?php
+                        }
+                        $count++;
+                    }
+                    if($count > 0) echo '</div>'; // Tutup div lg:col-span-1 pembungkus artikel kecil
+                } else {
+                    echo '<div class="lg:col-span-3 text-center py-10"><p class="text-gray-500 text-lg">Belum ada artikel edukasi saat ini.</p></div>';
+                }
+                ?>
+            </div>
+            <div class="mt-8 text-center md:hidden">
+                <a href="artikel.php" class="inline-flex bg-red-700 text-white px-6 py-3 rounded-full font-bold shadow-lg hover:bg-red-800 transition">Lihat Semua Artikel</a>
+            </div>
+        </div>
+    </section>
+
     <footer id="kontak" class="relative bg-red-950 text-white overflow-hidden">
         <div class="absolute inset-0 bg-gradient-to-br from-red-900 via-red-950 to-black opacity-95 z-0"></div>
         
