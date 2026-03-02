@@ -47,9 +47,16 @@ if(!$data_web) {
 </head>
 <body class="bg-gray-50 font-sans antialiased text-gray-800">
 
-    <div id="page-loader" class="fixed inset-0 z-[100] bg-white/90 backdrop-blur-sm flex-col items-center justify-center">
-        <div class="w-16 h-16 border-4 border-gray-200 border-t-red-700 rounded-full animate-spin mb-4"></div>
-        <h2 class="text-xl font-bold text-red-700 tracking-widest animate-pulse">LOADING...</h2>
+    <div id="page-loader" class="fixed inset-0 z-[100] bg-white/95 backdrop-blur-sm flex-col items-center justify-center transition-opacity duration-300">
+        <div class="relative w-40 h-40 md:w-56 md:h-56 mb-4">
+            <img src="assets/loading.png" alt="Loading Background" class="absolute inset-0 w-full h-full object-contain opacity-20 grayscale">
+            
+            <img src="assets/loading.png" alt="Loading Progress" id="loading-image-progress" class="absolute inset-0 w-full h-full object-contain drop-shadow-xl" style="clip-path: inset(100% 0 0 0); transition: clip-path 0.1s linear;">
+        </div>
+        
+        <h2 class="text-2xl font-black text-gray-900 tracking-widest mt-2 flex items-center">
+            MEMUAT <span id="loading-percentage" class="text-red-700 ml-2 w-16 text-left">0%</span>
+        </h2>
     </div>
 
     <nav class="fixed w-full z-40 bg-white/90 backdrop-blur-md border-b border-gray-100 transition-all duration-300">
@@ -196,9 +203,6 @@ if(!$data_web) {
                         <span class="text-xs font-bold text-red-700 bg-red-100 px-2 py-1 rounded mb-3 inline-block self-start"><?php echo $k['kategori']; ?></span>
                         <h3 class="text-2xl font-bold text-gray-900 mb-2"><?php echo $k['nama_produk']; ?></h3>
                         <p class="text-gray-600 mb-6 flex-1"><?php echo substr($k['deskripsi'], 0, 90); ?>...</p>
-                        <a href="<?php echo $data_web->link_wa; ?>" target="_blank" class="fixed bottom-6 right-6 z-50 transition duration-300 transform hover:scale-110 drop-shadow-2xl hover:drop-shadow-none cursor-pointer">
-                        <img src="assets/wa.png" alt="WhatsApp" class="w-14 h-14 object-contain">
-                        </a>
                     </div>
                 </div>
                 <?php }} else { ?>
@@ -327,15 +331,51 @@ if(!$data_web) {
             }
         });
 
+        // ANIMASI LOADING BARU
         const loader = document.getElementById('page-loader');
         const navLinks = document.querySelectorAll('.nav-link');
+        const progressImg = document.getElementById('loading-image-progress');
+        const progressText = document.getElementById('loading-percentage');
+
+        function startLoadingAnimation(callback) {
+            loader.classList.add('active');
+            let progress = 0;
+            
+            // Reset state
+            progressImg.style.clipPath = 'inset(100% 0 0 0)';
+            progressText.innerText = '0%';
+
+            const interval = setInterval(() => {
+                progress += Math.floor(Math.random() * 15) + 5; 
+                if (progress >= 100) {
+                    progress = 100;
+                    clearInterval(interval);
+                    progressImg.style.clipPath = `inset(0% 0 0 0)`;
+                    progressText.innerText = `100%`;
+                    
+                    setTimeout(() => {
+                        if(callback) callback();
+                    }, 300); 
+                } else {
+                    progressImg.style.clipPath = `inset(${100 - progress}% 0 0 0)`;
+                    progressText.innerText = `${progress}%`;
+                }
+            }, 50); 
+        }
+
         navLinks.forEach(link => {
             link.addEventListener('click', function(e) {
-                if(this.getAttribute('href').includes('.php')) {
-                    loader.classList.add('active');
+                const targetUrl = this.getAttribute('href');
+                
+                if(targetUrl.includes('.php')) {
+                    e.preventDefault(); 
+                    startLoadingAnimation(() => {
+                        window.location.href = targetUrl;
+                    });
                 } else {
-                    loader.classList.add('active');
-                    setTimeout(() => { loader.classList.remove('active'); }, 800);
+                    startLoadingAnimation(() => {
+                        loader.classList.remove('active');
+                    });
                 }
             });
         });
@@ -389,8 +429,8 @@ if(!$data_web) {
         initSlider('.tentang-slide', 4000);
     </script>
 
-    <a href="<?php echo $data_web->link_wa; ?>" target="_blank" class="fixed bottom-6 right-6 z-50 transition duration-300 transform hover:scale-110 drop-shadow-2xl flex items-center justify-center cursor-pointer">
-        <img src="assets/wa.png" alt="WhatsApp" class="w-14 h-14 object-contain mix-blend-multiply">
+    <a href="<?php echo $data_web->link_wa; ?>" target="_blank" class="fixed bottom-6 right-6 z-[100] bg-white p-3 rounded-full shadow-[0_8px_30px_rgb(0,0,0,0.15)] border border-gray-100 transition-all duration-300 transform hover:-translate-y-2 hover:shadow-red-700/40 flex items-center justify-center cursor-pointer group">
+        <img src="assets/wa.png" alt="WhatsApp" class="w-10 h-10 object-contain transition-transform duration-300 group-hover:scale-110">
     </a>
 </body>
 </html>
