@@ -157,8 +157,8 @@ $page = isset($_GET['page']) ? $_GET['page'] : 'list';
                 <h2 class="text-xl font-bold text-gray-800">Kelola Artikel & Berita</h2>
                 <p class="text-sm text-gray-500">Tulis dan atur publikasi berita perusahaan</p>
             </div>
-            <div class="flex items-center bg-gray-50 px-4 py-2 rounded-full border border-gray-200">
-                <span class="font-bold text-sm text-gray-700"><?php echo $_SESSION['admin_global']->nama_lengkap; ?></span>
+            <div class="flex items-center bg-gray-50 px-6 py-2 rounded-full border border-gray-200">
+            <span class="font-bold text-sm text-gray-700 uppercase tracking-widest">ADMIN</span>
             </div>
         </header>
 

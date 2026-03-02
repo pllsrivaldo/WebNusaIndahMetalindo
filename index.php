@@ -389,8 +389,8 @@ if(!$data_web) {
         initSlider('.tentang-slide', 4000);
     </script>
 
-    <a href="<?php echo $data_web->link_wa; ?>" target="_blank" class="fixed bottom-6 right-6 z-50 bg-white p-3 rounded-full shadow-2xl hover:bg-gray-100 transition duration-300 transform hover:scale-110 flex items-center justify-center">
-        <img src="assets/wa.png" alt="WhatsApp" class="w-10 h-10 object-contain">
+    <a href="<?php echo $data_web->link_wa; ?>" target="_blank" class="fixed bottom-6 right-6 z-50 transition duration-300 transform hover:scale-110 drop-shadow-2xl flex items-center justify-center cursor-pointer">
+        <img src="assets/wa.png" alt="WhatsApp" class="w-14 h-14 object-contain mix-blend-multiply">
     </a>
 </body>
 </html>

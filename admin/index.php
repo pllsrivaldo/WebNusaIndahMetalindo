@@ -109,7 +109,7 @@ $jml_proyek = mysqli_num_rows(mysqli_query($conn, "SELECT id FROM portofolio_pro
 
     <aside class="w-64 bg-gray-900 text-white flex flex-col shadow-2xl hidden md:flex z-20 shrink-0">
         <div class="h-20 flex items-center justify-center border-b border-gray-800">
-            <h1 class="text-2xl font-black tracking-wider">NIM<span class="text-red-500">ADMIN</span></h1>
+            <h1 class="text-2xl font-black tracking-wider">NIM<span class="text-red-500"> ADMIN</span></h1>
         </div>
         <div class="flex-1 overflow-y-auto py-6 px-4 space-y-2">
             <p class="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4 ml-2">Menu Utama</p>
@@ -141,11 +141,8 @@ $jml_proyek = mysqli_num_rows(mysqli_query($conn, "SELECT id FROM portofolio_pro
                 <h2 class="text-xl font-bold text-gray-800">Dashboard Overview</h2>
                 <p class="text-sm text-gray-500">Pusat Kendali Website PT Nusa Indah Metalindo</p>
             </div>
-            <div class="flex items-center bg-gray-50 px-4 py-2 rounded-full border border-gray-200">
-                <div class="w-8 h-8 bg-red-600 rounded-full flex items-center justify-center text-white font-bold mr-3">
-                    <?php echo substr($_SESSION['admin_global']->nama_lengkap, 0, 1); ?>
-                </div>
-                <span class="font-bold text-sm text-gray-700"><?php echo $_SESSION['admin_global']->nama_lengkap; ?></span>
+            <div class="flex items-center bg-gray-50 px-6 py-2 rounded-full border border-gray-200">
+            <span class="font-bold text-sm text-gray-700 uppercase tracking-widest">ADMIN</span>
             </div>
         </header>
 
@@ -209,7 +206,7 @@ $jml_proyek = mysqli_num_rows(mysqli_query($conn, "SELECT id FROM portofolio_pro
                                 <input type="text" name="link_wa" value="<?php echo $data_web->link_wa; ?>" class="w-full px-4 py-2 border rounded-xl focus:ring-2 focus:ring-red-500 outline-none bg-gray-50 text-sm">
                             </div>
                             <div>
-                                <label class="block text-gray-700 font-bold mb-2 text-sm">Email Perusahaan (mailto:...)</label>
+                                <label class="block text-gray-700 font-bold mb-2 text-sm">Email Perusahaan</label>
                                 <input type="text" name="link_email" value="<?php echo $data_web->link_email; ?>" class="w-full px-4 py-2 border rounded-xl focus:ring-2 focus:ring-red-500 outline-none bg-gray-50 text-sm">
                             </div>
                         </div>

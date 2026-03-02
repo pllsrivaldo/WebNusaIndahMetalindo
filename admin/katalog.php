@@ -11,6 +11,27 @@ if (!is_dir('../assets/uploads')) {
     mkdir('../assets/uploads', 0777, true);
 }
 
+// --- LOGIKA TAMBAH KATEGORI BARU ---
+if (isset($_POST['add_kategori'])) {
+    $nama_kat = mysqli_real_escape_string($conn, $_POST['nama_kategori']);
+    mysqli_query($conn, "INSERT INTO kategori (nama_kategori) VALUES ('$nama_kat')");
+    echo '<script>window.location="katalog.php"</script>';
+}
+
+// --- LOGIKA HAPUS KATEGORI (TAMBAHAN PENTING) ---
+if (isset($_GET['hapus_kat'])) {
+    $id_kat = $_GET['hapus_kat'];
+    // Cek dulu apakah kategori ini masih dipakai oleh produk
+    $cek_produk = mysqli_query($conn, "SELECT id FROM katalog_produk WHERE kategori = '$id_kat'");
+    if(mysqli_num_rows($cek_produk) > 0) {
+        echo '<script>alert("Kategori gagal dihapus karena masih digunakan oleh produk!"); window.location="katalog.php"</script>';
+    } else {
+        mysqli_query($conn, "DELETE FROM kategori WHERE id = '$id_kat'");
+        echo '<script>window.location="katalog.php"</script>';
+    }
+}
+
+// --- LOGIKA TAMBAH PRODUK ---
 if (isset($_POST['submit_katalog'])) {
     $nama = mysqli_real_escape_string($conn, $_POST['nama_produk']);
     $kategori = mysqli_real_escape_string($conn, $_POST['kategori']);
@@ -38,6 +59,7 @@ if (isset($_POST['submit_katalog'])) {
     }
 }
 
+// --- LOGIKA HAPUS PRODUK ---
 if (isset($_GET['hapus'])) {
     $id_hapus = $_GET['hapus'];
     $produk = mysqli_query($conn, "SELECT gambar FROM katalog_produk WHERE id = '$id_hapus'");
@@ -98,11 +120,8 @@ if (isset($_GET['hapus'])) {
                 <h2 class="text-xl font-bold text-gray-800">Kelola Katalog Produk</h2>
                 <p class="text-sm text-gray-500">Tambah atau hapus etalase produk SOTHO</p>
             </div>
-            <div class="flex items-center bg-gray-50 px-4 py-2 rounded-full border border-gray-200">
-                <div class="w-8 h-8 bg-red-600 rounded-full flex items-center justify-center text-white font-bold mr-3">
-                    <?php echo substr($_SESSION['admin_global']->nama_lengkap, 0, 1); ?>
-                </div>
-                <span class="font-bold text-sm text-gray-700"><?php echo $_SESSION['admin_global']->nama_lengkap; ?></span>
+            <div class="flex items-center bg-gray-50 px-6 py-2 rounded-full border border-gray-200">
+            <span class="font-bold text-sm text-gray-700 uppercase tracking-widest">ADMIN</span>
             </div>
         </header>
 
@@ -120,12 +139,18 @@ if (isset($_GET['hapus'])) {
                             <input type="text" name="nama_produk" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-red-500 outline-none bg-gray-50" required placeholder="Cth: Kanal C 0.75">
                         </div>
                         <div class="mb-4">
-                            <label class="block text-gray-700 font-semibold mb-2 text-sm">Kategori</label>
-                            <select name="kategori" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-red-500 outline-none bg-gray-50" required>
+                            <div class="flex justify-between items-center mb-2">
+                                <label class="block text-gray-700 font-semibold text-sm">Kategori</label>
+                                <button type="button" onclick="document.getElementById('modalKategori').style.display='flex'" class="text-blue-600 text-xs font-bold hover:underline">+ Kelola Kategori</button>
+                            </div>
+                            <select name="kategori" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-red-500 outline-none bg-gray-50 cursor-pointer" required>
                                 <option value="">Pilih Kategori</option>
-                                <option value="Rangka Atap">Rangka Atap</option>
-                                <option value="Atap Spandek">Atap Spandek</option>
-                                <option value="Aksesoris">Aksesoris</option>
+                                <?php
+                                $kat = mysqli_query($conn, "SELECT * FROM kategori ORDER BY nama_kategori ASC");
+                                while($k = mysqli_fetch_array($kat)){
+                                    echo '<option value="'.$k['id'].'">'.$k['nama_kategori'].'</option>';
+                                }
+                                ?>
                             </select>
                         </div>
                         <div class="mb-4">
@@ -134,7 +159,7 @@ if (isset($_GET['hapus'])) {
                         </div>
                         <div class="mb-6">
                             <label class="block text-gray-700 font-semibold mb-2 text-sm">Upload Gambar Produk</label>
-                            <input type="file" name="gambar" class="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm bg-gray-50" required accept="image/png, image/jpeg, image/jpg, image/webp">
+                            <input type="file" name="gambar" class="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm bg-gray-50" required accept="image/*">
                         </div>
                         <button type="submit" name="submit_katalog" class="w-full bg-gray-900 hover:bg-gray-800 text-white font-bold py-3 rounded-xl transition duration-300 shadow">Simpan Produk</button>
                     </form>
@@ -158,7 +183,11 @@ if (isset($_GET['hapus'])) {
                             <tbody>
                                 <?php
                                 $no = 1;
-                                $produk = mysqli_query($conn, "SELECT * FROM katalog_produk ORDER BY id DESC");
+                                $sql_get = "SELECT katalog_produk.*, kategori.nama_kategori 
+                                            FROM katalog_produk 
+                                            LEFT JOIN kategori ON katalog_produk.kategori = kategori.id 
+                                            ORDER BY katalog_produk.id DESC";
+                                $produk = mysqli_query($conn, $sql_get);
                                 if (mysqli_num_rows($produk) > 0) {
                                     while ($row = mysqli_fetch_array($produk)) {
                                 ?>
@@ -169,7 +198,7 @@ if (isset($_GET['hapus'])) {
                                     </td>
                                     <td class="p-4">
                                         <p class="font-bold text-gray-800 mb-1"><?php echo $row['nama_produk']; ?></p>
-                                        <span class="bg-red-100 text-red-700 text-xs px-2 py-1 rounded font-semibold"><?php echo $row['kategori']; ?></span>
+                                        <span class="bg-blue-50 text-blue-700 text-[10px] px-2 py-1 rounded font-bold uppercase tracking-wider"><?php echo $row['nama_kategori']; ?></span>
                                     </td>
                                     <td class="p-4 text-center">
                                         <a href="?hapus=<?php echo $row['id']; ?>" onclick="return confirm('Yakin ingin menghapus produk ini?')" class="inline-block bg-red-50 text-red-600 px-4 py-2 rounded-lg hover:bg-red-600 hover:text-white text-sm font-bold transition shadow-sm">Hapus</a>
@@ -186,6 +215,39 @@ if (isset($_GET['hapus'])) {
                 </div>
             </div>
         </main>
+    </div>
+
+
+    <div id="modalKategori" class="fixed inset-0 bg-black/50 z-[100] hidden items-center justify-center p-4">
+        <div class="bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl">
+            <h3 class="text-xl font-bold mb-6 flex items-center">📂 Kelola Kategori</h3>
+            
+            <div class="mb-6 max-h-48 overflow-y-auto border rounded-xl p-4 bg-gray-50">
+                <p class="text-xs font-bold text-gray-400 uppercase mb-3">Daftar Kategori Saat Ini:</p>
+                <div class="space-y-2">
+                    <?php
+                    $kat_list = mysqli_query($conn, "SELECT * FROM kategori ORDER BY nama_kategori ASC");
+                    while($kl = mysqli_fetch_array($kat_list)){
+                    ?>
+                    <div class="flex justify-between items-center bg-white p-2 rounded-lg border shadow-sm">
+                        <span class="text-sm font-medium text-gray-700"><?php echo $kl['nama_kategori']; ?></span>
+                        <a href="?hapus_kat=<?php echo $kl['id']; ?>" onclick="return confirm('Hapus kategori ini?')" class="text-red-500 hover:text-red-700 p-1">
+                            🗑️
+                        </a>
+                    </div>
+                    <?php } ?>
+                </div>
+            </div>
+
+            <form action="" method="POST">
+                <label class="text-xs font-bold text-gray-400 uppercase">Tambah Baru:</label>
+                <input type="text" name="nama_kategori" class="w-full px-4 py-3 border rounded-xl mb-4 mt-2 outline-none focus:ring-2 focus:ring-blue-500" placeholder="Nama kategori baru..." required>
+                <div class="flex gap-4">
+                    <button type="button" onclick="document.getElementById('modalKategori').style.display='none'" class="flex-1 bg-gray-100 py-3 rounded-xl font-bold">Tutup</button>
+                    <button type="submit" name="add_kategori" class="flex-1 bg-blue-600 text-white py-3 rounded-xl font-bold">Simpan</button>
+                </div>
+            </form>
+        </div>
     </div>
 </body>
 </html>

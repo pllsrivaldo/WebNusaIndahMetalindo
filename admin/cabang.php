@@ -74,11 +74,8 @@ if (isset($_GET['hapus'])) {
                 <h2 class="text-xl font-bold text-gray-800">Kelola Kantor Cabang</h2>
                 <p class="text-sm text-gray-500">Atur alamat cabang untuk ditampilkan di footer</p>
             </div>
-            <div class="flex items-center bg-gray-50 px-4 py-2 rounded-full border border-gray-200">
-                <div class="w-8 h-8 bg-red-600 rounded-full flex items-center justify-center text-white font-bold mr-3">
-                    <?php echo substr($_SESSION['admin_global']->nama_lengkap, 0, 1); ?>
-                </div>
-                <span class="font-bold text-sm text-gray-700"><?php echo $_SESSION['admin_global']->nama_lengkap; ?></span>
+            <div class="flex items-center bg-gray-50 px-6 py-2 rounded-full border border-gray-200">
+            <span class="font-bold text-sm text-gray-700 uppercase tracking-widest">ADMIN</span>
             </div>
         </header>
 
