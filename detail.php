@@ -98,20 +98,10 @@ $result_related = $conn->query($sql_related);
                 <h1 class="text-3xl md:text-4xl lg:text-5xl font-black text-gray-900 leading-tight mb-6"><?php echo htmlspecialchars($artikel['judul']); ?></h1>
                 
                 <div class="flex flex-wrap items-center text-gray-500 font-medium text-sm gap-4">
-                    <div class="flex items-center">
-                        <div class="w-8 h-8 rounded-full bg-red-700 text-white flex items-center justify-center font-bold mr-2 shadow-sm">N</div>
-                        <span class="font-bold text-gray-800">Tim NIMSTEEL</span>
-                    </div>
-                    <span class="hidden sm:inline text-gray-300">|</span>
                     <span class="flex items-center">
                         <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg> 
                         <?php echo date('d F Y', strtotime($artikel['tanggal'])); ?>
                     </span>
-                    <span class="hidden sm:inline text-gray-300">|</span>
-                    <div class="flex gap-2">
-                        <button class="text-gray-400 hover:text-blue-600 transition"><svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M24 4.557c-.883.392-1.832.656-2.828.775 1.017-.609 1.798-1.574 2.165-2.724-.951.564-2.005.974-3.127 1.195-.897-.957-2.178-1.555-3.594-1.555-3.179 0-5.515 2.966-4.797 6.045-4.091-.205-7.719-2.165-10.148-5.144-1.29 2.213-.669 5.108 1.523 6.574-.806-.026-1.566-.247-2.229-.616-.054 2.281 1.581 4.415 3.949 4.89-.693.188-1.452.232-2.224.084.626 1.956 2.444 3.379 4.6 3.419-2.07 1.623-4.678 2.348-7.29 2.04 2.179 1.397 4.768 2.212 7.548 2.212 9.142 0 14.307-7.721 13.995-14.646.962-.695 1.797-1.562 2.457-2.549z"/></svg></button>
-                        <button class="text-gray-400 hover:text-green-600 transition"><svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12.031 0c-6.627 0-11.996 5.373-11.996 11.998 0 2.115.545 4.148 1.583 5.952l-1.618 5.91 6.046-1.587c1.748.961 3.731 1.468 5.792 1.468 6.624 0 11.996-5.372 11.996-11.998 0-6.625-5.372-11.998-11.996-11.998zm6.545 17.203c-.287.808-1.492 1.565-2.072 1.638-.521.066-1.182.164-3.25-.694-2.486-1.033-4.085-3.567-4.212-3.736-.124-.167-1.006-1.341-1.006-2.559 0-1.217.632-1.815.856-2.052.222-.236.486-.296.65-.296.162 0 .324.004.464.011.149.006.353-.058.552.421.2.478.681 1.666.745 1.794.062.128.104.278.02.444-.085.166-.128.269-.254.417-.126.15-.264.32-.38.448-.126.136-.26.284-.112.54.149.255.663 1.096 1.42 1.776.974.872 1.794 1.144 2.053 1.272.257.127.408.105.561-.069.153-.174.662-.771.84-1.036.177-.265.353-.221.586-.134.233.088 1.479.697 1.734.825.253.127.422.189.484.296.061.107.061.621-.226 1.429z"/></svg></button>
-                    </div>
                 </div>
             </header>
 

@@ -77,7 +77,7 @@ $result_news = $conn->query($sql_news);
                         <span class="bg-red-600 text-white text-xs font-bold px-3 py-1 rounded-sm uppercase tracking-widest w-fit mb-4 shadow">Artikel Pilihan</span>
                         <h1 class="text-3xl md:text-5xl font-black text-white mb-4 leading-tight group-hover:text-red-300 transition"><?php echo htmlspecialchars($headline['judul']); ?></h1>
                         <p class="text-gray-300 text-sm md:text-base font-medium flex items-center">
-                            <span class="mr-2">🕒</span> <?php echo date('d F Y', strtotime($headline['tanggal'])); ?>
+                            <span class="mr-0.5"></span> <?php echo date('d F Y', strtotime($headline['tanggal'])); ?>
                         </p>
                     </div>
                 </a>
