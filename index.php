@@ -1,4 +1,14 @@
-<?php include 'koneksi.php'; ?>
+<?php 
+include 'koneksi.php'; 
+
+// Ambil Pengaturan Web (Sosmed & Pelanggan)
+$web_query = mysqli_query($conn, "SELECT * FROM pengaturan_web WHERE id = 1");
+$data_web = mysqli_fetch_object($web_query);
+if(!$data_web) {
+    // Fallback jika belum di-set di admin
+    $data_web = (object)[ 'jumlah_pelanggan' => '10000', 'link_ig' => '#', 'link_tiktok' => '#', 'link_wa' => '#', 'link_email' => '#' ];
+}
+?>
 <!DOCTYPE html>
 <html lang="id" class="scroll-smooth">
 <head>
@@ -60,7 +70,22 @@
         </div>
     </nav>
 
-    <section id="beranda" class="relative h-screen flex items-center justify-center hero-bg overflow-hidden">
+    <section id="beranda" class="relative h-screen flex items-center justify-center overflow-hidden bg-gray-900">
+        <div id="hero-slider-container" class="absolute inset-0 w-full h-full">
+            <?php
+            $q_hero = mysqli_query($conn, "SELECT * FROM slider_hero ORDER BY id ASC");
+            $hero_images = [];
+            while($h = mysqli_fetch_assoc($q_hero)) { $hero_images[] = $h['gambar']; }
+            if(count($hero_images) == 0) { $hero_images[] = '../perusahan.jpg'; } 
+            
+            foreach($hero_images as $index => $img) {
+                $opacity = ($index == 0) ? 'opacity-100' : 'opacity-0';
+                $path = (strpos($img, '../') === 0) ? str_replace('../', 'assets/', $img) : 'assets/uploads/'.$img;
+                echo "<div class='hero-slide absolute inset-0 bg-cover bg-center transition-opacity duration-1000 ease-in-out $opacity' style='background-image: linear-gradient(to right, rgba(17, 24, 39, 0.95), rgba(17, 24, 39, 0.7)), url(\"$path\");'></div>";
+            }
+            ?>
+        </div>
+
         <div class="relative z-20 text-center px-4 max-w-5xl mx-auto mt-20">
             <span class="bg-red-700 text-white px-4 py-1 rounded-full text-sm font-bold tracking-widest uppercase mb-6 inline-block">Sejak 2009</span>
             <h1 class="text-5xl md:text-7xl font-extrabold text-white mb-6 leading-tight drop-shadow-2xl">
@@ -77,9 +102,20 @@
         <div class="max-w-7xl mx-auto px-6">
             <div class="flex flex-col md:flex-row items-center gap-16 mb-20">
                 <div class="md:w-1/2">
-                    <div class="h-96 bg-gray-200 rounded-3xl overflow-hidden shadow-2xl relative">
-                        <div class="absolute inset-0 bg-gradient-to-tr from-gray-800 to-transparent z-10"></div>
-                        <img src="assets/profil.jpg" alt="Profil NIM" class="w-full h-full object-cover">
+                    <div class="h-96 bg-gray-200 rounded-3xl overflow-hidden shadow-2xl relative" id="tentang-slider-container">
+                        <div class="absolute inset-0 bg-gradient-to-tr from-gray-800 to-transparent z-10 pointer-events-none"></div>
+                        <?php
+                        $q_tentang = mysqli_query($conn, "SELECT * FROM foto_tentang ORDER BY id ASC");
+                        $tentang_images = [];
+                        while($t = mysqli_fetch_assoc($q_tentang)) { $tentang_images[] = $t['gambar']; }
+                        if(count($tentang_images) == 0) { $tentang_images[] = '../profil.jpg'; } 
+                        
+                        foreach($tentang_images as $index => $img) {
+                            $opacity = ($index == 0) ? 'opacity-100' : 'opacity-0';
+                            $path = (strpos($img, '../') === 0) ? str_replace('../', 'assets/', $img) : 'assets/uploads/'.$img;
+                            echo "<img src='$path' class='tentang-slide absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ease-in-out $opacity' alt='Fasilitas NIM'>";
+                        }
+                        ?>
                     </div>
                 </div>
                 <div class="md:w-1/2">
@@ -99,10 +135,8 @@
                     <h3 class="text-3xl font-black text-gray-900">Galeri <span class="text-red-700">Proyek</span></h3>
                     <p class="text-gray-500 mt-2">Bukti nyata komitmen kami memberikan kualitas produk terbaik di lapangan.</p>
                 </div>
-                
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
                     <?php
-                    // Memanggil 8 foto proyek terbaru
                     $proyek = mysqli_query($conn, "SELECT * FROM portofolio_proyek ORDER BY id DESC LIMIT 8");
                     if(mysqli_num_rows($proyek) > 0) {
                         while($p = mysqli_fetch_array($proyek)){
@@ -120,7 +154,6 @@
                     <?php } ?>
                 </div>
             </div>
-
         </div>
     </section>
 
@@ -134,7 +167,7 @@
             
             <div class="flex justify-center mt-10">
                 <div class="p-4 text-center">
-                    <h3 class="text-7xl md:text-8xl font-black text-red-700 mb-4 counter drop-shadow-md tracking-tight leading-none" data-target="10000">0</h3>
+                    <h3 class="text-7xl md:text-8xl font-black text-red-700 mb-4 counter drop-shadow-md tracking-tight leading-none" data-target="<?php echo $data_web->jumlah_pelanggan; ?>">0</h3>
                     <p class="text-gray-800 font-bold uppercase tracking-widest text-lg mb-2">Pelanggan Terlayani</p>
                     <p class="text-gray-600 text-base font-medium">Tersebar di Seluruh Wilayah Indonesia</p>
                 </div>
@@ -151,9 +184,7 @@
 
             <div class="grid grid-cols-1 md:grid-cols-3 gap-10">
                 <?php
-                // Menampilkan maksimal 6 produk terbaru di beranda
                 $katalog = mysqli_query($conn, "SELECT * FROM katalog_produk ORDER BY id DESC LIMIT 6");
-                
                 if(mysqli_num_rows($katalog) > 0) {
                     while($k = mysqli_fetch_array($katalog)){
                 ?>
@@ -165,7 +196,9 @@
                         <span class="text-xs font-bold text-red-700 bg-red-100 px-2 py-1 rounded mb-3 inline-block self-start"><?php echo $k['kategori']; ?></span>
                         <h3 class="text-2xl font-bold text-gray-900 mb-2"><?php echo $k['nama_produk']; ?></h3>
                         <p class="text-gray-600 mb-6 flex-1"><?php echo substr($k['deskripsi'], 0, 90); ?>...</p>
-                        <a href="https://wa.me/6281234567890?text=Halo,%20saya%20tertarik%20dengan%20produk%20<?php echo urlencode($k['nama_produk']); ?>" target="_blank" class="nav-link text-red-700 font-bold hover:text-red-800 flex items-center mt-auto">Detail Produk <span class="ml-2">→</span></a>
+                        <a href="<?php echo $data_web->link_wa; ?>" target="_blank" class="fixed bottom-6 right-6 z-50 transition duration-300 transform hover:scale-110 drop-shadow-2xl hover:drop-shadow-none cursor-pointer">
+                        <img src="assets/wa.png" alt="WhatsApp" class="w-14 h-14 object-contain">
+                        </a>
                     </div>
                 </div>
                 <?php }} else { ?>
@@ -189,7 +222,6 @@
 
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 <?php
-                // Ambil 4 artikel terbaru untuk dashboard (1 Besar, 3 Kecil)
                 $artikel_beranda = mysqli_query($conn, "SELECT * FROM artikel ORDER BY tanggal DESC LIMIT 4");
                 if(mysqli_num_rows($artikel_beranda) > 0) {
                     $count = 0;
@@ -198,7 +230,6 @@
                         if(empty($a['gambar'])) $img_art = 'https://via.placeholder.com/800x500?text=No+Image';
                         
                         if($count == 0) {
-                            // Headline Besar (Kiri - Porsi 2 Kolom)
                             ?>
                             <div class="lg:col-span-2 group">
                                 <a href="detail.php?id=<?php echo $a['id']; ?>" class="block relative rounded-xl overflow-hidden shadow-md h-full min-h-[400px]">
@@ -215,11 +246,10 @@
                             <div class="lg:col-span-1 flex flex-col gap-6">
                             <?php
                         } else {
-                            // List Artikel Kecil (Kanan - Porsi 1 Kolom)
                             ?>
                                 <a href="detail.php?id=<?php echo $a['id']; ?>" class="group flex flex-row bg-white rounded-xl overflow-hidden hover:shadow-lg transition duration-300 border border-gray-100 h-full">
                                     <div class="w-1/3 h-full min-h-[120px] bg-gray-200 overflow-hidden relative">
-                                        <img src="<?php echo $img_art; ?>" alt="<?php echo htmlspecialchars($a['judul']); ?>" class="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition duration-500">
+                                        <img src="<?php echo $img_art; ?>" alt="<?php echo htmlspecialchars($a['judul']); ?>" class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition duration-500">
                                     </div>
                                     <div class="w-2/3 p-5 flex flex-col justify-center">
                                         <span class="text-xs font-bold text-red-600 mb-2 uppercase tracking-wider"><?php echo date('d M Y', strtotime($a['tanggal'])); ?></span>
@@ -230,7 +260,7 @@
                         }
                         $count++;
                     }
-                    if($count > 0) echo '</div>'; // Tutup div lg:col-span-1 pembungkus artikel kecil
+                    if($count > 0) echo '</div>'; 
                 } else {
                     echo '<div class="lg:col-span-3 text-center py-10"><p class="text-gray-500 text-lg">Belum ada artikel edukasi saat ini.</p></div>';
                 }
@@ -248,7 +278,6 @@
         <div class="relative z-10 max-w-7xl mx-auto px-6 py-16">
             <div class="flex flex-wrap gap-8 justify-between">
                 <?php
-                // Mengambil data cabang dari database
                 $cabang = mysqli_query($conn, "SELECT * FROM kantor_cabang ORDER BY id ASC");
                 while($c = mysqli_fetch_array($cabang)){
                 ?>
@@ -268,19 +297,20 @@
 
         <div class="relative z-10 bg-black py-6 border-t border-red-900/50">
             <div class="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center">
-                <div class="mb-4 md:mb-0">
-                    <img src="assets/logo.png" alt="NIM Logo" class="h-10 bg-white/10 p-1 rounded-lg backdrop-blur-sm" onerror="this.outerHTML='<h2 class=\'text-xl font-black text-white\'>NIMSTEEL</h2>'">
+                
+                <div class="mb-4 md:mb-0 bg-white px-3 py-1 rounded-lg">
+                    <img src="assets/logo.png" alt="SOTHO Logo" class="h-10" onerror="this.outerHTML='<h2 class=\'text-xl font-black text-red-700\'>SOTHO</h2>'">
                 </div>
                 
-                <div class="flex space-x-6">
-                    <a href="#" class="text-white hover:text-red-500 transition duration-300">
-                        <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
+                <div class="flex space-x-6 items-center">
+                    <a href="<?php echo $data_web->link_ig; ?>" target="_blank" class="text-gray-400 hover:text-white transition duration-300 transform hover:scale-110">
+                        <svg class="w-7 h-7" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
                     </a>
-                    <a href="#" class="text-white hover:text-red-500 transition duration-300">
-                        <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M0 3v18h24v-18h-24zm6.623 7.929l-4.623 5.712v-9.458l4.623 3.746zm-4.141-5.929h19.035l-9.517 7.713-9.518-7.713zm5.694 7.188l3.824 3.099 3.83-3.104 5.612 6.817h-18.779l5.513-6.812zm9.208-1.264l4.616-3.741v9.348l-4.616-5.607z"/></svg>
+                    <a href="<?php echo $data_web->link_email; ?>" target="_blank" class="text-gray-400 hover:text-white transition duration-300 transform hover:scale-110">
+                        <svg class="w-7 h-7" fill="currentColor" viewBox="0 0 24 24"><path d="M0 3v18h24v-18h-24zm6.623 7.929l-4.623 5.712v-9.458l4.623 3.746zm-4.141-5.929h19.035l-9.517 7.713-9.518-7.713zm5.694 7.188l3.824 3.099 3.83-3.104 5.612 6.817h-18.779l5.513-6.812zm9.208-1.264l4.616-3.741v9.348l-4.616-5.607z"/></svg>
                     </a>
-                    <a href="#" class="text-white hover:text-red-500 transition duration-300">
-                        <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M12.031 0c-6.627 0-11.996 5.373-11.996 11.998 0 2.115.545 4.148 1.583 5.952l-1.618 5.91 6.046-1.587c1.748.961 3.731 1.468 5.792 1.468 6.624 0 11.996-5.372 11.996-11.998 0-6.625-5.372-11.998-11.996-11.998zm6.545 17.203c-.287.808-1.492 1.565-2.072 1.638-.521.066-1.182.164-3.25-.694-2.486-1.033-4.085-3.567-4.212-3.736-.124-.167-1.006-1.341-1.006-2.559 0-1.217.632-1.815.856-2.052.222-.236.486-.296.65-.296.162 0 .324.004.464.011.149.006.353-.058.552.421.2.478.681 1.666.745 1.794.062.128.104.278.02.444-.085.166-.128.269-.254.417-.126.15-.264.32-.38.448-.126.136-.26.284-.112.54.149.255.663 1.096 1.42 1.776.974.872 1.794 1.144 2.053 1.272.257.127.408.105.561-.069.153-.174.662-.771.84-1.036.177-.265.353-.221.586-.134.233.088 1.479.697 1.734.825.253.127.422.189.484.296.061.107.061.621-.226 1.429z"/></svg>
+                    <a href="<?php echo $data_web->link_tiktok; ?>" target="_blank" class="text-gray-400 hover:text-white transition duration-300 transform hover:scale-110">
+                        <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M12.525.02c1.31-.02 2.61-.01 3.91.04.15 1.53.85 3.06 2.11 4.03 1.25.96 2.87 1.25 4.45 1.34v3.91c-1.7-.05-3.37-.5-4.82-1.34-.02 2.76.01 5.53-.02 8.29-.16 2.45-1.38 4.81-3.32 6.33-1.92 1.5-4.44 2.12-6.84 1.77-2.39-.36-4.54-1.64-5.89-3.53-1.32-1.86-1.78-4.22-1.35-6.44.4-2.19 1.64-4.15 3.44-5.4 1.76-1.2 4-1.68 6.13-1.4v3.98c-1.04-.15-2.13-.08-3.08.38-1 .47-1.8 1.32-2.22 2.34-.41 1.01-.48 2.16-.18 3.19.28 1.01.95 1.88 1.86 2.4 1.01.55 2.22.71 3.32.42 1.13-.3 2.08-1.06 2.6-2.09.52-1.04.66-2.25.66-3.41V.02z"/></svg>
                     </a>
                 </div>
             </div>
@@ -299,16 +329,13 @@
 
         const loader = document.getElementById('page-loader');
         const navLinks = document.querySelectorAll('.nav-link');
-
         navLinks.forEach(link => {
             link.addEventListener('click', function(e) {
                 if(this.getAttribute('href').includes('.php')) {
                     loader.classList.add('active');
                 } else {
                     loader.classList.add('active');
-                    setTimeout(() => {
-                        loader.classList.remove('active');
-                    }, 800);
+                    setTimeout(() => { loader.classList.remove('active'); }, 800);
                 }
             });
         });
@@ -343,10 +370,27 @@
             });
             observer.observe(counterSection);
         }
+
+        function initSlider(sliderClass, interval) {
+            const slides = document.querySelectorAll(sliderClass);
+            if(slides.length > 1) {
+                let currentSlide = 0;
+                setInterval(() => {
+                    slides[currentSlide].classList.remove('opacity-100');
+                    slides[currentSlide].classList.add('opacity-0');
+                    currentSlide = (currentSlide + 1) % slides.length;
+                    slides[currentSlide].classList.remove('opacity-0');
+                    slides[currentSlide].classList.add('opacity-100');
+                }, interval);
+            }
+        }
+        
+        initSlider('.hero-slide', 4000);
+        initSlider('.tentang-slide', 4000);
     </script>
 
-    <a href="https://wa.me/6281234567890" target="_blank" class="fixed bottom-6 right-6 z-50 bg-[#25D366] text-white p-4 rounded-full shadow-2xl hover:bg-[#20b858] transition duration-300 transform hover:scale-110 flex items-center justify-center">
-        <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 24 24"><path d="M12.031 0c-6.627 0-11.996 5.373-11.996 11.998 0 2.115.545 4.148 1.583 5.952l-1.618 5.91 6.046-1.587c1.748.961 3.731 1.468 5.792 1.468 6.624 0 11.996-5.372 11.996-11.998 0-6.625-5.372-11.998-11.996-11.998zm6.545 17.203c-.287.808-1.492 1.565-2.072 1.638-.521.066-1.182.164-3.25-.694-2.486-1.033-4.085-3.567-4.212-3.736-.124-.167-1.006-1.341-1.006-2.559 0-1.217.632-1.815.856-2.052.222-.236.486-.296.65-.296.162 0 .324.004.464.011.149.006.353-.058.552.421.2.478.681 1.666.745 1.794.062.128.104.278.02.444-.085.166-.128.269-.254.417-.126.15-.264.32-.38.448-.126.136-.26.284-.112.54.149.255.663 1.096 1.42 1.776.974.872 1.794 1.144 2.053 1.272.257.127.408.105.561-.069.153-.174.662-.771.84-1.036.177-.265.353-.221.586-.134.233.088 1.479.697 1.734.825.253.127.422.189.484.296.061.107.061.621-.226 1.429z"/></svg>
+    <a href="<?php echo $data_web->link_wa; ?>" target="_blank" class="fixed bottom-6 right-6 z-50 bg-white p-3 rounded-full shadow-2xl hover:bg-gray-100 transition duration-300 transform hover:scale-110 flex items-center justify-center">
+        <img src="assets/wa.png" alt="WhatsApp" class="w-10 h-10 object-contain">
     </a>
 </body>
 </html>

@@ -2,7 +2,7 @@
 $host = "localhost";
 $user = "root";
 $pass = ""; // Kosongkan jika password bawaan XAMPP tidak diubah
-$db   = "nim_website";
+$db   = "website_nim";
 
 $conn = mysqli_connect($host, $user, $pass, $db);
 
