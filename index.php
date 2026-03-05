@@ -52,6 +52,7 @@ if($query_katalog && mysqli_num_rows($query_katalog) > 0) {
             display: flex;
             opacity: 1;
         }
+        /* Menyembunyikan scrollbar agar clean, tapi tetap bisa digeser manual */
         .hide-scrollbar::-webkit-scrollbar {
             display: none;
         }
@@ -71,7 +72,6 @@ if($query_katalog && mysqli_num_rows($query_katalog) > 0) {
             pointer-events: none; 
         }
         
-        /* Pastikan konten footer di atas canvas */
         .footer-content {
             position: relative;
             z-index: 10;
@@ -175,16 +175,16 @@ if($query_katalog && mysqli_num_rows($query_katalog) > 0) {
                         <p class="text-gray-500 mt-2">Bukti nyata komitmen kami memberikan kualitas produk terbaik di lapangan.</p>
                     </div>
                     
-                    <div class="relative">
+                    <div class="relative group">
                         <div id="proyek-slider" class="flex overflow-x-auto snap-x snap-mandatory gap-6 pb-4 hide-scrollbar scroll-smooth px-1">
                             <?php
                             $proyek = mysqli_query($conn, "SELECT * FROM portofolio_proyek ORDER BY id DESC LIMIT 8");
                             if(mysqli_num_rows($proyek) > 0) {
                                 while($p = mysqli_fetch_array($proyek)){
                             ?>
-                            <div class="snap-start flex-none w-[85vw] md:w-[calc(50%-0.75rem)] lg:w-[calc(25%-1.125rem)] group relative overflow-hidden rounded-xl h-48 md:h-64 shadow-sm border border-gray-100 bg-gray-200">
-                                <img src="assets/uploads/<?php echo $p['gambar']; ?>" alt="<?php echo $p['judul']; ?>" class="w-full h-full object-cover transition duration-500 group-hover:scale-110">
-                                <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-4">
+                            <div class="snap-start flex-none w-[85vw] md:w-[calc(50%-0.75rem)] lg:w-[calc(25%-1.125rem)] relative overflow-hidden rounded-xl h-48 md:h-64 shadow-sm border border-gray-100 bg-gray-200">
+                                <img src="assets/uploads/<?php echo $p['gambar']; ?>" alt="<?php echo $p['judul']; ?>" class="w-full h-full object-cover transition duration-500 hover:scale-110">
+                                <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 hover:opacity-100 transition-opacity duration-300 flex items-end p-4">
                                     <p class="text-white font-bold text-sm leading-tight"><?php echo $p['judul']; ?></p>
                                 </div>
                             </div>
@@ -194,7 +194,15 @@ if($query_katalog && mysqli_num_rows($query_katalog) > 0) {
                                 </div>
                             <?php } ?>
                         </div>
-                        <div id="proyek-dots" class="flex justify-center items-center mt-6 gap-2"></div>
+                        
+                        <?php if(mysqli_num_rows($proyek) > 4) { ?>
+                        <button onclick="scrollProyek(-1)" class="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 md:-translate-x-6 z-10 bg-white hover:bg-red-700 hover:text-white text-gray-800 w-12 h-12 rounded-full flex items-center justify-center shadow-lg border border-gray-100 transition-all duration-300 focus:outline-none hidden md:flex opacity-80 hover:opacity-100">
+                            <svg class="w-6 h-6 ml-[-2px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+                        </button>
+                        <button onclick="scrollProyek(1)" class="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 md:translate-x-6 z-10 bg-white hover:bg-red-700 hover:text-white text-gray-800 w-12 h-12 rounded-full flex items-center justify-center shadow-lg border border-gray-100 transition-all duration-300 focus:outline-none hidden md:flex opacity-80 hover:opacity-100">
+                            <svg class="w-6 h-6 mr-[-2px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                        </button>
+                        <?php } ?>
                     </div>
 
                 </div>
@@ -231,22 +239,21 @@ if($query_katalog && mysqli_num_rows($query_katalog) > 0) {
                         
                         <div id="katalog-slider" class="flex overflow-x-auto snap-x snap-mandatory gap-6 pb-4 hide-scrollbar scroll-smooth px-1">
                             <?php 
-                            // Diubah jadi 8 agar slidernya ada isinya jika digeser (2 halaman x 4)
                             $slider_items = array_slice($katalog_all, 0, 8); 
                             foreach($slider_items as $k){ 
                                 $img_kat = (strpos($k['gambar'], 'http') === 0) ? $k['gambar'] : 'assets/uploads/' . $k['gambar'];
                                 if(empty($k['gambar'])) $img_kat = 'https://via.placeholder.com/400x300?text=No+Image';
                                 $nama_kategori = !empty($k['nama_kategori']) ? $k['nama_kategori'] : 'Umum'; 
                             ?>
-                            <div class="snap-start flex-none w-[85vw] md:w-[calc(50%-0.75rem)] lg:w-[calc(25%-1.125rem)] bg-white rounded-2xl overflow-hidden card-hover border border-gray-100 transition-all duration-300 flex flex-col shadow-sm hover:shadow-xl relative group">
+                            <div class="snap-start flex-none w-[85vw] md:w-[calc(50%-0.75rem)] lg:w-[calc(25%-1.125rem)] bg-white rounded-2xl overflow-hidden card-hover border border-gray-100 transition-all duration-300 flex flex-col shadow-sm hover:shadow-xl relative group/card">
                                 <div class="h-56 bg-gray-200 relative overflow-hidden">
-                                    <img src="<?php echo $img_kat; ?>" alt="<?php echo htmlspecialchars($k['nama_produk']); ?>" class="w-full h-full object-cover transition duration-500 group-hover:scale-110">
+                                    <img src="<?php echo $img_kat; ?>" alt="<?php echo htmlspecialchars($k['nama_produk']); ?>" class="w-full h-full object-cover transition duration-500 group-hover/card:scale-110">
                                 </div>
                                 <div class="p-6 md:p-8 flex-1 flex flex-col relative z-10">
                                     <div class="absolute -top-4 left-6 md:left-8">
                                         <span class="bg-red-700 text-white text-[11px] font-extrabold px-4 py-1.5 rounded-full uppercase tracking-widest shadow-md border-2 border-white"><?php echo htmlspecialchars($nama_kategori); ?></span>
                                     </div>
-                                    <h3 class="text-2xl font-black text-gray-900 mb-3 mt-2 leading-tight group-hover:text-red-700 transition"><?php echo htmlspecialchars($k['nama_produk']); ?></h3>
+                                    <h3 class="text-2xl font-black text-gray-900 mb-3 mt-2 leading-tight group-hover/card:text-red-700 transition"><?php echo htmlspecialchars($k['nama_produk']); ?></h3>
                                     <p class="text-gray-600 mb-6 flex-1 leading-relaxed text-sm md:text-base"><?php echo htmlspecialchars(substr(strip_tags($k['deskripsi']), 0, 90)); ?>...</p>
                                     <span class="text-red-700 font-bold text-sm flex items-center mt-auto">Lihat Detail <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg></span>
                                 </div>
@@ -254,9 +261,15 @@ if($query_katalog && mysqli_num_rows($query_katalog) > 0) {
                             </div>
                             <?php } ?>
                         </div>
-                        
-                        <div id="katalog-dots" class="flex justify-center items-center mt-8 gap-2"></div>
 
+                        <?php if(count($slider_items) > 4) { ?>
+                        <button onclick="scrollKatalog(-1)" class="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 md:-translate-x-6 z-10 bg-white hover:bg-red-700 hover:text-white text-gray-800 w-12 h-12 rounded-full flex items-center justify-center shadow-lg border border-gray-100 transition-all duration-300 focus:outline-none hidden md:flex opacity-80 hover:opacity-100">
+                            <svg class="w-6 h-6 ml-[-2px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+                        </button>
+                        <button onclick="scrollKatalog(1)" class="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 md:translate-x-6 z-10 bg-white hover:bg-red-700 hover:text-white text-gray-800 w-12 h-12 rounded-full flex items-center justify-center shadow-lg border border-gray-100 transition-all duration-300 focus:outline-none hidden md:flex opacity-80 hover:opacity-100">
+                            <svg class="w-6 h-6 mr-[-2px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                        </button>
+                        <?php } ?>
                     </div>
 
                     <div class="text-center mt-10">
@@ -434,15 +447,15 @@ if($query_katalog && mysqli_num_rows($query_katalog) > 0) {
                             if(empty($k['gambar'])) $img_kat = 'https://via.placeholder.com/400x300?text=No+Image';
                             $nama_kategori = !empty($k['nama_kategori']) ? $k['nama_kategori'] : 'Umum'; 
                     ?>
-                    <div class="bg-white rounded-2xl overflow-hidden card-hover border border-gray-100 transition-all duration-300 flex flex-col shadow-sm relative group">
+                    <div class="bg-white rounded-2xl overflow-hidden card-hover border border-gray-100 transition-all duration-300 flex flex-col shadow-sm relative group/card">
                         <div class="h-48 bg-gray-200 relative overflow-hidden">
-                            <img src="<?php echo $img_kat; ?>" alt="<?php echo htmlspecialchars($k['nama_produk']); ?>" class="w-full h-full object-cover transition duration-500 group-hover:scale-110">
+                            <img src="<?php echo $img_kat; ?>" alt="<?php echo htmlspecialchars($k['nama_produk']); ?>" class="w-full h-full object-cover transition duration-500 group-hover/card:scale-110">
                         </div>
                         <div class="p-6 flex-1 flex flex-col relative z-10">
                             <div class="absolute -top-4 left-6">
                                 <span class="bg-red-700 text-white text-[10px] font-extrabold px-3 py-1 rounded-full uppercase tracking-widest shadow-md border-2 border-white"><?php echo htmlspecialchars($nama_kategori); ?></span>
                             </div>
-                            <h3 class="text-lg font-black text-gray-900 mb-2 mt-2 leading-tight group-hover:text-red-700 transition"><?php echo htmlspecialchars($k['nama_produk']); ?></h3>
+                            <h3 class="text-lg font-black text-gray-900 mb-2 mt-2 leading-tight group-hover/card:text-red-700 transition"><?php echo htmlspecialchars($k['nama_produk']); ?></h3>
                             <p class="text-gray-600 text-sm mb-5 flex-1 leading-relaxed"><?php echo htmlspecialchars(substr(strip_tags($k['deskripsi']), 0, 80)); ?>...</p>
                             
                             <a href="detail-produk.php?id=<?php echo $k['id']; ?>" class="text-center w-full bg-gray-50 hover:bg-red-700 hover:text-white text-red-700 font-bold py-2.5 rounded-xl border border-red-100 hover:border-red-700 transition-colors text-sm shadow-sm relative z-30">Lihat Detail Produk</a>
@@ -557,69 +570,30 @@ if($query_katalog && mysqli_num_rows($query_katalog) > 0) {
         initSlider('.hero-slide', 4000);
         initSlider('.tentang-slide', 4000);
 
+
         // ==========================================
-        // FUNGSI UNTUK MEMBUAT PENTOL SLIDER
+        // FUNGSI GESER MANUAL DENGAN TOMBOL PANAH
         // ==========================================
-        function initSliderDots(sliderId, dotsId) {
-            const slider = document.getElementById(sliderId);
-            const dotsContainer = document.getElementById(dotsId);
-            if (!slider || !dotsContainer) return;
-
-            const items = Array.from(slider.children);
-            if (items.length === 0) return;
-
-            // Generate pentol
-            dotsContainer.innerHTML = '';
-            const dots = [];
-            items.forEach((item, i) => {
-                const dot = document.createElement('button');
-                dot.className = 'transition-all duration-300 rounded-full h-2.5 w-2.5 bg-gray-300 focus:outline-none';
-                dot.onclick = () => {
-                    // Geser ke gambar yang diklik
-                    item.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'start' });
-                };
-                dotsContainer.appendChild(dot);
-                dots.push(dot);
-            });
-
-            // Beri warna merah pada pentol pertama
-            if(dots.length > 0) {
-                dots[0].classList.remove('w-2.5', 'bg-gray-300');
-                dots[0].classList.add('w-8', 'bg-red-700');
+        function scrollProyek(dir) {
+            const slider = document.getElementById('proyek-slider');
+            if(slider) {
+                // Ambil lebar 1 kartu ditambah margin/gap
+                const itemWidth = slider.firstElementChild ? slider.firstElementChild.clientWidth : 300;
+                const gap = 24; // 1.5rem (sesuai class gap-6 tailwind)
+                const scrollAmount = itemWidth + gap;
+                slider.scrollBy({ left: dir * scrollAmount, behavior: 'smooth' });
             }
-
-            // Fungsi untuk update pentol saat digeser
-            slider.addEventListener('scroll', () => {
-                let closestIndex = 0;
-                let minDiff = Infinity;
-                
-                // Cari gambar mana yang paling tengah posisinya
-                items.forEach((item, i) => {
-                    let diff = Math.abs(item.offsetLeft - slider.offsetLeft - slider.scrollLeft);
-                    if (diff < minDiff) {
-                        minDiff = diff;
-                        closestIndex = i;
-                    }
-                });
-
-                // Update warna pentol
-                dots.forEach((dot, i) => {
-                    if (i === closestIndex) {
-                        dot.classList.remove('w-2.5', 'bg-gray-300');
-                        dot.classList.add('w-8', 'bg-red-700');
-                    } else {
-                        dot.classList.add('w-2.5', 'bg-gray-300');
-                        dot.classList.remove('w-8', 'bg-red-700');
-                    }
-                });
-            });
         }
 
-        // Panggil fungsi pembuat pentol saat halaman selesai dimuat
-        window.addEventListener('load', () => {
-            initSliderDots('proyek-slider', 'proyek-dots');
-            initSliderDots('katalog-slider', 'katalog-dots');
-        });
+        function scrollKatalog(dir) {
+            const slider = document.getElementById('katalog-slider');
+            if(slider) {
+                const itemWidth = slider.firstElementChild ? slider.firstElementChild.clientWidth : 300;
+                const gap = 24; 
+                const scrollAmount = itemWidth + gap;
+                slider.scrollBy({ left: dir * scrollAmount, behavior: 'smooth' });
+            }
+        }
 
         // POPUP PROMO
         let promoTimeout;

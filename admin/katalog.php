@@ -36,17 +36,38 @@ if (isset($_POST['submit_katalog'])) {
     $kategori = mysqli_real_escape_string($conn, $_POST['kategori']);
     $deskripsi = mysqli_real_escape_string($conn, $_POST['deskripsi']);
 
+    $tipe_diizinkan = array('jpg', 'jpeg', 'png', 'webp');
+
+    // 1. Upload Gambar Utama
     $filename = $_FILES['gambar']['name'];
     $tmp_name = $_FILES['gambar']['tmp_name'];
-    
     $type1 = explode('.', $filename);
     $type2 = strtolower(end($type1));
     $newname = 'produk_'.time().'.'.$type2;
-    $tipe_diizinkan = array('jpg', 'jpeg', 'png', 'webp');
+    
+    // 2. Upload Gambar Tambahan (Bisa Multiple)
+    $gambar_lain_arr = [];
+    if(isset($_FILES['gambar_lain']['name'][0]) && $_FILES['gambar_lain']['name'][0] != '') {
+        $countfiles = count($_FILES['gambar_lain']['name']);
+        for($i = 0; $i < $countfiles; $i++) {
+            $filename2 = $_FILES['gambar_lain']['name'][$i];
+            $tmp_name2 = $_FILES['gambar_lain']['tmp_name'][$i];
+            $type1_2 = explode('.', $filename2);
+            $type2_2 = strtolower(end($type1_2));
+            if(in_array($type2_2, $tipe_diizinkan)) {
+                $newname2 = 'detail_'.time().'_'.$i.'.'.$type2_2;
+                move_uploaded_file($tmp_name2, '../assets/uploads/'.$newname2);
+                $gambar_lain_arr[] = $newname2;
+            }
+        }
+    }
+    // Gabungkan nama file dengan koma
+    $string_gambar_lain = implode(',', $gambar_lain_arr);
 
     if(in_array($type2, $tipe_diizinkan)) {
         move_uploaded_file($tmp_name, '../assets/uploads/'.$newname);
-        $insert = mysqli_query($conn, "INSERT INTO katalog_produk (nama_produk, kategori, deskripsi, gambar) VALUES ('$nama', '$kategori', '$deskripsi', '$newname')");
+        
+        $insert = mysqli_query($conn, "INSERT INTO katalog_produk (nama_produk, kategori, deskripsi, gambar, gambar_lain) VALUES ('$nama', '$kategori', '$deskripsi', '$newname', '$string_gambar_lain')");
 
         if ($insert) {
             echo '<script>alert("Produk berhasil ditambahkan!"); window.location="katalog.php"</script>';
@@ -54,7 +75,7 @@ if (isset($_POST['submit_katalog'])) {
             echo '<script>alert("Gagal menambahkan produk ke database.")</script>';
         }
     } else {
-        echo '<script>alert("Format file tidak diizinkan! Gunakan JPG, PNG, atau WEBP.")</script>';
+        echo '<script>alert("Format file gambar utama tidak diizinkan! Gunakan JPG, PNG, atau WEBP.")</script>';
     }
 }
 
@@ -64,40 +85,64 @@ if (isset($_POST['update_katalog'])) {
     $nama = mysqli_real_escape_string($conn, $_POST['nama_produk']);
     $kategori = mysqli_real_escape_string($conn, $_POST['kategori']);
     $deskripsi = mysqli_real_escape_string($conn, $_POST['deskripsi']);
+    
     $gambar_lama = $_POST['gambar_lama'];
+    $gambar_lain_lama = isset($_POST['gambar_lain_lama']) ? $_POST['gambar_lain_lama'] : '';
 
+    $tipe_diizinkan = array('jpg', 'jpeg', 'png', 'webp');
+
+    // 1. Proses Gambar Utama
     $filename = $_FILES['gambar']['name'];
     $tmp_name = $_FILES['gambar']['tmp_name'];
-
-    // Jika admin mengganti gambar
     if ($filename != '') {
         $type1 = explode('.', $filename);
         $type2 = strtolower(end($type1));
-        $newname = 'produk_'.time().'.'.$type2;
-        $tipe_diizinkan = array('jpg', 'jpeg', 'png', 'webp');
-
         if(in_array($type2, $tipe_diizinkan)) {
-            // Hapus gambar lama dari folder
-            if(file_exists('../assets/uploads/'.$gambar_lama)) {
-                unlink('../assets/uploads/'.$gambar_lama);
-            }
-            // Upload gambar baru
+            if(file_exists('../assets/uploads/'.$gambar_lama)) unlink('../assets/uploads/'.$gambar_lama);
+            $newname = 'produk_'.time().'.'.$type2;
             move_uploaded_file($tmp_name, '../assets/uploads/'.$newname);
             $namagambar = $newname;
         } else {
-            echo '<script>alert("Format file tidak diizinkan! Gunakan JPG, PNG, atau WEBP."); window.location="katalog.php";</script>';
-            exit;
+            echo '<script>alert("Format file gambar utama tidak diizinkan!"); window.location="katalog.php";</script>'; exit;
         }
     } else {
-        // Jika gambar tidak diganti, tetap gunakan nama gambar lama
         $namagambar = $gambar_lama;
+    }
+
+    // 2. Proses Gambar Tambahan (Multiple)
+    if (isset($_FILES['gambar_lain']['name'][0]) && $_FILES['gambar_lain']['name'][0] != '') {
+        // Hapus foto tambahan lama jika upload yang baru
+        $old_lain = explode(',', $gambar_lain_lama);
+        foreach($old_lain as $ol) {
+            if(trim($ol) != '' && file_exists('../assets/uploads/'.trim($ol))) {
+                unlink('../assets/uploads/'.trim($ol));
+            }
+        }
+        
+        $gambar_lain_arr = [];
+        $countfiles = count($_FILES['gambar_lain']['name']);
+        for($i = 0; $i < $countfiles; $i++) {
+            $filename2 = $_FILES['gambar_lain']['name'][$i];
+            $tmp_name2 = $_FILES['gambar_lain']['tmp_name'][$i];
+            $type1_2 = explode('.', $filename2);
+            $type2_2 = strtolower(end($type1_2));
+            if(in_array($type2_2, $tipe_diizinkan)) {
+                $newname2 = 'detail_'.time().'_'.$i.'.'.$type2_2;
+                move_uploaded_file($tmp_name2, '../assets/uploads/'.$newname2);
+                $gambar_lain_arr[] = $newname2;
+            }
+        }
+        $namagambar2 = implode(',', $gambar_lain_arr);
+    } else {
+        $namagambar2 = $gambar_lain_lama;
     }
 
     $update = mysqli_query($conn, "UPDATE katalog_produk SET 
                                     nama_produk = '$nama', 
                                     kategori = '$kategori', 
                                     deskripsi = '$deskripsi', 
-                                    gambar = '$namagambar' 
+                                    gambar = '$namagambar',
+                                    gambar_lain = '$namagambar2'
                                     WHERE id = '$id'");
 
     if ($update) {
@@ -110,11 +155,19 @@ if (isset($_POST['update_katalog'])) {
 // --- LOGIKA HAPUS PRODUK ---
 if (isset($_GET['hapus'])) {
     $id_hapus = $_GET['hapus'];
-    $produk = mysqli_query($conn, "SELECT gambar FROM katalog_produk WHERE id = '$id_hapus'");
+    $produk = mysqli_query($conn, "SELECT gambar, gambar_lain FROM katalog_produk WHERE id = '$id_hapus'");
     $p = mysqli_fetch_object($produk);
-    if(file_exists('../assets/uploads/'.$p->gambar)) {
-        unlink('../assets/uploads/'.$p->gambar);
+    
+    if(file_exists('../assets/uploads/'.$p->gambar)) unlink('../assets/uploads/'.$p->gambar);
+    
+    // Hapus semua foto tambahan
+    $old_lain = explode(',', $p->gambar_lain);
+    foreach($old_lain as $ol) {
+        if(trim($ol) != '' && file_exists('../assets/uploads/'.trim($ol))) {
+            unlink('../assets/uploads/'.trim($ol));
+        }
     }
+    
     $delete = mysqli_query($conn, "DELETE FROM katalog_produk WHERE id = '$id_hapus'");
     echo '<script>alert("Produk berhasil dihapus!"); window.location="katalog.php"</script>';
 }
@@ -134,27 +187,15 @@ if (isset($_GET['edit'])) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Kelola Katalog - Admin NIM</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    
     <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
     <script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
-
     <style>
         ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-track { background: #f1f1f1; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
-        
-        #editor-container {
-            height: 250px;
-            background-color: #f9fafb;
-            border-bottom-left-radius: 0.75rem;
-            border-bottom-right-radius: 0.75rem;
-        }
-        .ql-toolbar {
-            background-color: white;
-            border-top-left-radius: 0.75rem;
-            border-top-right-radius: 0.75rem;
-        }
+        #editor-container { height: 200px; background-color: #f9fafb; border-bottom-left-radius: 0.75rem; border-bottom-right-radius: 0.75rem; }
+        .ql-toolbar { background-color: white; border-top-left-radius: 0.75rem; border-top-right-radius: 0.75rem; }
     </style>
 </head>
 <body class="bg-gray-100 font-sans text-gray-800 flex h-screen overflow-hidden">
@@ -243,23 +284,40 @@ if (isset($_GET['edit'])) {
                         </div>
                         
                         <div class="mb-4">
-                            <label class="block text-gray-700 font-semibold mb-2 text-sm">Deskripsi Lengkap & Keunggulan</label>
-                            <p class="text-xs text-gray-400 mb-2">Kamu bisa memasukkan teks, list, hingga foto tambahan di area bawah ini.</p>
+                            <label class="block text-gray-700 font-semibold mb-2 text-sm">Teks Deskripsi & Spesifikasi</label>
+                            <p class="text-xs text-gray-400 mb-2">Ketik penjelasan produk atau buat list di sini.</p>
                             <input type="hidden" name="deskripsi" id="deskripsi_hidden">
                             <div id="editor-container"><?php echo ($data_edit) ? $data_edit->deskripsi : ''; ?></div>
                         </div>
 
-                        <div class="mb-6">
-                            <label class="block text-gray-700 font-semibold mb-2 text-sm">Upload Gambar Produk (Utama)</label>
+                        <div class="mb-4 border-t border-gray-100 pt-4">
+                            <label class="block text-gray-700 font-bold mb-2 text-sm">1. Foto Produk Utama</label>
                             <?php if($data_edit) { ?>
-                                <p class="text-xs text-blue-600 mb-2">*Biarkan kosong jika tidak ingin mengganti gambar.</p>
                                 <div class="mb-2">
-                                    <img src="../assets/uploads/<?php echo $data_edit->gambar; ?>" class="w-24 h-24 object-cover rounded-xl border border-gray-200">
+                                    <img src="../assets/uploads/<?php echo $data_edit->gambar; ?>" class="w-20 h-20 object-cover rounded-xl border border-gray-200">
                                 </div>
                                 <input type="file" name="gambar" class="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm bg-gray-50" accept="image/*">
                             <?php } else { ?>
                                 <input type="file" name="gambar" class="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm bg-gray-50" required accept="image/*">
                             <?php } ?>
+                        </div>
+
+                        <div class="mb-6">
+                            <label class="block text-gray-700 font-bold mb-2 text-sm">2. Foto Tambahan (Bisa Pilih Banyak File)</label>
+                            <p class="text-[10px] text-gray-400 mb-2">*Tahan tombol CTRL untuk memilih banyak file gambar sekaligus. Jika upload baru, file tambahan lama akan dihapus otomatis.</p>
+                            <?php if($data_edit && !empty($data_edit->gambar_lain)) { ?>
+                                <div class="mb-2 flex flex-wrap gap-2">
+                                    <?php 
+                                    $arr_lain = explode(',', $data_edit->gambar_lain);
+                                    foreach($arr_lain as $img) { 
+                                        if(trim($img) != '') {
+                                    ?>
+                                        <img src="../assets/uploads/<?php echo trim($img); ?>" class="w-16 h-16 object-cover rounded-xl border border-gray-200">
+                                    <?php }} ?>
+                                </div>
+                                <input type="hidden" name="gambar_lain_lama" value="<?php echo $data_edit->gambar_lain; ?>">
+                            <?php } ?>
+                            <input type="file" name="gambar_lain[]" multiple class="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm bg-gray-50" accept="image/*">
                         </div>
                         
                         <?php if($data_edit) { ?>
@@ -323,11 +381,9 @@ if (isset($_GET['edit'])) {
         </main>
     </div>
 
-
     <div id="modalKategori" class="fixed inset-0 bg-black/50 z-[100] hidden items-center justify-center p-4">
         <div class="bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl">
             <h3 class="text-xl font-bold mb-6 flex items-center">📂 Kelola Kategori</h3>
-            
             <div class="mb-6 max-h-48 overflow-y-auto border rounded-xl p-4 bg-gray-50">
                 <p class="text-xs font-bold text-gray-400 uppercase mb-3">Daftar Kategori Saat Ini:</p>
                 <div class="space-y-2">
@@ -337,14 +393,11 @@ if (isset($_GET['edit'])) {
                     ?>
                     <div class="flex justify-between items-center bg-white p-2 rounded-lg border shadow-sm">
                         <span class="text-sm font-medium text-gray-700"><?php echo $kl['nama_kategori']; ?></span>
-                        <a href="?hapus_kat=<?php echo $kl['id']; ?>" onclick="return confirm('Hapus kategori ini?')" class="text-red-500 hover:text-red-700 p-1">
-                            🗑️
-                        </a>
+                        <a href="?hapus_kat=<?php echo $kl['id']; ?>" onclick="return confirm('Hapus kategori ini?')" class="text-red-500 hover:text-red-700 p-1">🗑️</a>
                     </div>
                     <?php } ?>
                 </div>
             </div>
-
             <form action="" method="POST">
                 <label class="text-xs font-bold text-gray-400 uppercase">Tambah Baru:</label>
                 <input type="text" name="nama_kategori" class="w-full px-4 py-3 border rounded-xl mb-4 mt-2 outline-none focus:ring-2 focus:ring-blue-500" placeholder="Nama kategori baru..." required>
@@ -359,28 +412,24 @@ if (isset($_GET['edit'])) {
     <script>
         var quill = new Quill('#editor-container', {
             theme: 'snow',
-            placeholder: 'Ketik deskripsi produk, buat daftar list, atau masukkan gambar detail di sini...',
+            placeholder: 'Ketik deskripsi produk atau buat daftar list di sini...',
             modules: {
                 toolbar: [
                     [{ 'header': [1, 2, 3, false] }],
                     ['bold', 'italic', 'underline'],
                     [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-                    ['image', 'link'],
-                    ['clean']
+                    ['link', 'clean']
                 ]
             }
         });
 
-        // Saat form diklik submit, copy isi HTML dari editor Quill ke input hidden
         var form = document.querySelector('#formProduk');
         form.onsubmit = function() {
             var descHtml = document.querySelector('.ql-editor').innerHTML;
-            
-            if (quill.getText().trim().length === 0 && !descHtml.includes('<img')) {
+            if (quill.getText().trim().length === 0) {
                 alert("Mohon isi deskripsi produk!");
                 return false;
             }
-            
             document.querySelector('#deskripsi_hidden').value = descHtml;
         };
     </script>

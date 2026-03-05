@@ -1,21 +1,18 @@
 <?php
 include 'koneksi.php';
 
-// Ambil Pengaturan Web
 $web_query = mysqli_query($conn, "SELECT * FROM pengaturan_web WHERE id = 1");
 $data_web = mysqli_fetch_object($web_query);
 if(!$data_web) {
     $data_web = (object)[ 'link_ig' => '#', 'link_tiktok' => '#', 'link_wa' => '#', 'link_email' => '#' ];
 }
 
-// Cek apakah ada ID produk di URL
 if (!isset($_GET['id']) || empty($_GET['id'])) {
     die("<script>alert('Produk tidak ditemukan!'); window.location='index.php#katalog';</script>");
 }
 
 $id_produk = intval($_GET['id']);
 
-// Ambil data produk (Di-join dengan kategori)
 $sql = "SELECT katalog_produk.*, kategori.nama_kategori 
         FROM katalog_produk 
         LEFT JOIN kategori ON katalog_produk.kategori = kategori.id 
@@ -27,15 +24,28 @@ if ($result->num_rows == 0) {
 }
 $produk = $result->fetch_assoc();
 
-// Menyiapkan format pesan WA otomatis
 $pesan_wa = "Halo SOTHO, saya tertarik dan ingin bertanya lebih lanjut mengenai produk *" . $produk['nama_produk'] . "*. Bisa minta informasi harganya?";
 $link_wa_pesan = $data_web->link_wa . "&text=" . urlencode($pesan_wa);
 
-// Ambil gambar produk
-$img_produk = (strpos($produk['gambar'], 'http') === 0) ? $produk['gambar'] : 'assets/uploads/' . $produk['gambar'];
-if(empty($produk['gambar'])) $img_produk = 'https://via.placeholder.com/800x600?text=No+Image';
+// Siapkan Array Semua Foto (Foto Utama + Foto Tambahan)
+$semua_foto = [];
+// 1. Masukkan foto utama
+if(!empty($produk['gambar'])) {
+    $semua_foto[] = (strpos($produk['gambar'], 'http') === 0) ? $produk['gambar'] : 'assets/uploads/' . $produk['gambar'];
+} else {
+    $semua_foto[] = 'https://via.placeholder.com/800x600?text=No+Image';
+}
+// 2. Masukkan foto tambahan (karena dipisah koma)
+if(!empty($produk['gambar_lain'])) {
+    $foto_tambahan = explode(',', $produk['gambar_lain']);
+    foreach($foto_tambahan as $ft) {
+        if(trim($ft) != '') {
+            $semua_foto[] = (strpos(trim($ft), 'http') === 0) ? trim($ft) : 'assets/uploads/' . trim($ft);
+        }
+    }
+}
 
-// Ambil Produk Terkait (Kategori yang sama, maksimal 4)
+// Ambil Produk Terkait
 $id_kategori = $produk['kategori'];
 $sql_related = "SELECT katalog_produk.*, kategori.nama_kategori 
                 FROM katalog_produk 
@@ -52,42 +62,25 @@ $result_related = $conn->query($sql_related);
     <title><?php echo htmlspecialchars($produk['nama_produk']); ?> - SOTHO Baja Ringan</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* Styling Deskripsi (Quill.js Output) */
-        .prose p { margin-bottom: 1.25rem; line-height: 1.8; color: #4b5563; font-size: 1.1rem; }
-        .prose h1, .prose h2, .prose h3 { color: #111827; font-weight: 900; margin-top: 2rem; margin-bottom: 1rem; line-height: 1.3; }
-        .prose h2 { font-size: 1.5rem; } 
-        .prose h3 { font-size: 1.25rem; }
-        .prose a { color: #b91c1c; text-decoration: underline; font-weight: 600; transition: color 0.3s; }
-        .prose a:hover { color: #7f1d1d; }
-        .prose ul, .prose ol { margin-left: 1.5rem; margin-bottom: 1.5rem; color: #4b5563; font-size: 1.1rem; }
+        .prose p { margin-bottom: 1rem; line-height: 1.8; color: #4b5563; font-size: 1.05rem; }
+        .prose h1, .prose h2, .prose h3 { color: #111827; font-weight: 900; margin-top: 1.5rem; margin-bottom: 1rem; line-height: 1.3; }
+        .prose h2 { font-size: 1.3rem; } 
+        .prose h3 { font-size: 1.15rem; }
+        .prose ul, .prose ol { margin-left: 1.5rem; margin-bottom: 1.5rem; color: #4b5563; font-size: 1.05rem; }
         .prose ul { list-style-type: disc; }
         .prose ol { list-style-type: decimal; }
         .prose li { margin-bottom: 0.5rem; }
-        .prose img { border-radius: 0.5rem; margin-top: 2rem; margin-bottom: 0.5rem; max-width: 100%; height: auto; object-fit: contain; }
-        
-        /* Reset inline style bawaan editor CMS agar tidak merusak tema */
         .prose * { background-color: transparent !important; }
         
-        /* Custom scrollbar untuk tampilan lebih rapi */
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 4px;}
         ::-webkit-scrollbar-thumb { background: #c8c8c8; border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: #b91c1c; }
 
-        /* Styling CSS khusus untuk Canvas di Footer */
-        #footer-canvas {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 1; 
-            pointer-events: none; 
-        }
-        .footer-content {
-            position: relative;
-            z-index: 10;
-        }
+        #footer-canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; pointer-events: none; }
+        .footer-content { position: relative; z-index: 10; }
+        
+        .thumb-active { border-color: #b91c1c !important; opacity: 1 !important; }
     </style>
 </head>
 <body class="bg-gray-50 font-sans text-gray-800 flex flex-col min-h-screen overflow-x-hidden">
@@ -114,7 +107,7 @@ $result_related = $conn->query($sql_related);
         
         <article class="w-full lg:w-2/3">
             
-            <nav class="flex text-gray-500 text-xs md:text-sm font-semibold uppercase tracking-wider mb-6 border-b border-gray-200 pb-4 overflow-x-auto whitespace-nowrap">
+            <nav class="flex text-gray-500 text-xs md:text-sm font-semibold uppercase tracking-wider mb-6 pb-2 overflow-x-auto whitespace-nowrap">
                 <a href="index.php" class="hover:text-red-700 transition">Beranda</a>
                 <span class="mx-2 text-gray-300">/</span>
                 <a href="index.php#katalog" class="hover:text-red-700 transition">Katalog</a>
@@ -124,25 +117,54 @@ $result_related = $conn->query($sql_related);
                 </span>
             </nav>
 
-            <header class="mb-8">
-                <span class="bg-red-100 text-red-700 text-xs font-bold px-3 py-1.5 rounded-full uppercase tracking-widest mb-4 inline-block shadow-sm">Kategori: <?php echo htmlspecialchars($produk['nama_kategori']); ?></span>
-                <h1 class="text-3xl md:text-5xl font-black text-gray-900 leading-tight mb-6"><?php echo htmlspecialchars($produk['nama_produk']); ?></h1>
-            </header>
+            <div class="bg-white rounded-3xl shadow-sm border border-gray-100 p-6 md:p-8 mb-8 flex flex-col md:flex-row gap-8">
+                
+                <div class="w-full md:w-1/2 flex flex-col gap-4">
+                    <div onclick="openImageModal(document.getElementById('mainImage').src)" class="w-full h-64 md:h-80 bg-gray-50 border border-gray-100 rounded-2xl flex items-center justify-center p-4 overflow-hidden relative cursor-pointer group/zoom">
+                        <img id="mainImage" src="<?php echo $semua_foto[0]; ?>" class="w-full h-full object-contain transition-transform duration-300 group-hover/zoom:scale-105" alt="Produk">
+                        <div class="absolute inset-0 bg-black/5 opacity-0 group-hover/zoom:opacity-100 transition-opacity flex items-center justify-center">
+                            <span class="bg-white/90 text-gray-800 p-3 rounded-full shadow-lg">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7"></path></svg>
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <?php if(count($semua_foto) > 1): ?>
+                    <div class="flex gap-3 overflow-x-auto pb-2 hide-scrollbar">
+                        <?php foreach($semua_foto as $index => $foto): ?>
+                            <button onclick="changeImage('<?php echo $foto; ?>', this)" class="thumb-btn w-16 h-16 md:w-20 md:h-20 flex-shrink-0 bg-gray-50 border-2 <?php echo ($index == 0) ? 'border-red-700 opacity-100 thumb-active' : 'border-gray-200 opacity-70'; ?> rounded-xl overflow-hidden hover:opacity-100 transition-all focus:outline-none p-1 relative">
+                                <img src="<?php echo $foto; ?>" class="w-full h-full object-cover rounded-lg" alt="Thumb">
+                            </button>
+                        <?php endforeach; ?>
+                    </div>
+                    <?php endif; ?>
+                </div>
 
-            <figure class="mb-10 bg-white rounded-3xl shadow-sm border border-gray-100 p-4">
-                <img src="<?php echo $img_produk; ?>" class="w-full h-auto object-contain max-h-[500px] rounded-2xl" alt="<?php echo htmlspecialchars($produk['nama_produk']); ?>">
-            </figure>
+                <div class="w-full md:w-1/2 flex flex-col justify-center">
+                    <span class="bg-red-50 text-red-700 text-xs font-bold px-3 py-1.5 rounded-md uppercase tracking-widest w-fit mb-4 border border-red-100">
+                        <?php echo htmlspecialchars($produk['nama_kategori']); ?>
+                    </span>
+                    <h1 class="text-3xl md:text-4xl font-black text-gray-900 leading-tight mb-4"><?php echo htmlspecialchars($produk['nama_produk']); ?></h1>
+                    
+                    <p class="text-gray-500 text-sm mb-8 leading-relaxed">
+                        Tingkatkan kualitas konstruksi bangunan Anda dengan produk terbaik, awet, dan teruji standar nasional.
+                    </p>
+
+                    <div class="mt-auto">
+                        <p class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Pesan Sekarang:</p>
+                        <a href="<?php echo $link_wa_pesan; ?>" target="_blank" class="w-full bg-[#25D366] hover:bg-[#20b858] text-white text-center font-bold py-3.5 px-6 rounded-xl shadow-lg shadow-green-500/30 transition transform hover:-translate-y-1 flex items-center justify-center">
+                            Hubungi via WhatsApp
+                        </a>
+                    </div>
+                </div>
+            </div>
 
             <div class="bg-white rounded-3xl shadow-sm border border-gray-100 p-8 md:p-10 mb-10">
                 <div class="flex items-center mb-6 border-b-2 border-red-700 inline-block pb-2">
                     <h3 class="text-2xl font-black text-gray-900">Spesifikasi & Keunggulan</h3>
                 </div>
-                
                 <div class="prose max-w-none">
-                    <?php 
-                    // Menampilkan output dari QuillJS (tidak perlu htmlspecialchars/nl2br lagi agar HTML dari admin terbaca)
-                    echo $produk['deskripsi']; 
-                    ?>
+                    <?php echo $produk['deskripsi']; ?>
                 </div>
             </div>
             
@@ -152,15 +174,15 @@ $result_related = $conn->query($sql_related);
             
             <div class="bg-gradient-to-br from-red-800 to-red-950 rounded-2xl p-6 md:p-8 text-white shadow-xl relative overflow-hidden group block">
                 <div class="absolute -top-10 -right-10 p-4 opacity-10 transform rotate-12 transition-transform duration-500 group-hover:scale-110">
-                    <svg class="w-48 h-48" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12.031 0c-6.627 0-11.996 5.373-11.996 11.998 0 2.115.545 4.148 1.583 5.952l-1.618 5.91 6.046-1.587c1.748.961 3.731 1.468 5.792 1.468 6.624 0 11.996-5.372 11.996-11.998 0-6.625-5.372-11.998-11.996-11.998zm6.545 17.203c-.287.808-1.492 1.565-2.072 1.638-.521.066-1.182.164-3.25-.694-2.486-1.033-4.085-3.567-4.212-3.736-.124-.167-1.006-1.341-1.006-2.559 0-1.217.632-1.815.856-2.052.222-.236.486-.296.65-.296.162 0 .324.004.464.011.149.006.353-.058.552.421.2.478.681 1.666.745 1.794.062.128.104.278.02.444-.085.166-.128.269-.254.417-.126.15-.264.32-.38.448-.126.136-.26.284-.112.54.149.255.663 1.096 1.42 1.776.974.872 1.794 1.144 2.053 1.272.257.127.408.105.561-.069.153-.174.662-.771.84-1.036.177-.265.353-.221.586-.134.233.088 1.479.697 1.734.825.253.127.422.189.484.296.061.107.061.621-.226 1.429z"/></svg>
+                    <svg class="w-48 h-48" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 2l10 20H2z"/></svg>
                 </div>
                 
-                <h3 class="text-2xl font-black mb-3 leading-tight relative z-10">Tertarik dengan produk ini?</h3>
-                <p class="text-red-100 text-sm mb-6 leading-relaxed relative z-10">Konsultasikan kebutuhan material proyek Anda dan dapatkan penawaran harga pabrik terbaik dari kami.</p>
+                <span class="text-[10px] font-bold tracking-widest uppercase bg-black/30 px-2 py-1 rounded inline-block mb-4 relative z-10">Mitra Kontraktor</span>
+                <h3 class="text-2xl font-black mb-3 leading-tight relative z-10">Butuh Suplai Skala Besar?</h3>
+                <p class="text-red-100 text-sm mb-6 leading-relaxed relative z-10">Kami siap mendukung proyek konstruksi Anda dengan harga pabrik terbaik, ketersediaan stok terjamin, dan pengiriman ke seluruh Indonesia.</p>
                 
-                <a href="<?php echo $link_wa_pesan; ?>" target="_blank" class="w-full bg-[#25D366] hover:bg-[#20b858] text-white text-center font-bold py-3.5 px-6 rounded-xl shadow-lg shadow-green-900/50 transition transform hover:-translate-y-1 flex items-center justify-center relative z-10">
-                    <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12.031 0c-6.627 0-11.996 5.373-11.996 11.998 0 2.115.545 4.148 1.583 5.952l-1.618 5.91 6.046-1.587c1.748.961 3.731 1.468 5.792 1.468 6.624 0 11.996-5.372 11.996-11.998 0-6.625-5.372-11.998-11.996-11.998zm6.545 17.203c-.287.808-1.492 1.565-2.072 1.638-.521.066-1.182.164-3.25-.694-2.486-1.033-4.085-3.567-4.212-3.736-.124-.167-1.006-1.341-1.006-2.559 0-1.217.632-1.815.856-2.052.222-.236.486-.296.65-.296.162 0 .324.004.464.011.149.006.353-.058.552.421.2.478.681 1.666.745 1.794.062.128.104.278.02.444-.085.166-.128.269-.254.417-.126.15-.264.32-.38.448-.126.136-.26.284-.112.54.149.255.663 1.096 1.42 1.776.974.872 1.794 1.144 2.053 1.272.257.127.408.105.561-.069.153-.174.662-.771.84-1.036.177-.265.353-.221.586-.134.233.088 1.479.697 1.734.825.253.127.422.189.484.296.061.107.061.621-.226 1.429z"/></svg>
-                    Tanya Harga via WhatsApp
+                <a href="index.php#kontak" class="w-full bg-white hover:bg-gray-100 text-red-800 text-center font-bold py-3.5 px-6 rounded-xl shadow-lg transition transform hover:-translate-y-1 block relative z-10">
+                    Lihat Info Kontak
                 </a>
             </div>
 
@@ -246,7 +268,71 @@ $result_related = $conn->query($sql_related);
         <img src="assets/wa.png" alt="WhatsApp" class="w-10 h-10 object-contain transition-transform duration-300 group-hover:scale-110">
     </a>
 
+    <div id="image-modal" class="fixed inset-0 z-[200] hidden items-center justify-center bg-black/90 backdrop-blur-md opacity-0 transition-opacity duration-300">
+        <button onclick="closeImageModal()" class="absolute top-6 right-6 text-white hover:text-red-500 transition focus:outline-none z-50">
+            <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        </button>
+        
+        <img id="modal-image-content" src="" class="max-w-[95%] max-h-[95%] object-contain transform scale-95 transition-transform duration-300 relative z-10">
+        
+        <div class="absolute inset-0 z-0 cursor-pointer" onclick="closeImageModal()"></div>
+    </div>
+
     <script>
+        // SCRIPT GANTI GAMBAR GALERI KECIL (THUMBNAIL)
+        function changeImage(src, btn) {
+            document.getElementById('mainImage').src = src;
+            
+            const thumbs = document.querySelectorAll('.thumb-btn');
+            thumbs.forEach(t => {
+                t.classList.remove('border-red-700', 'opacity-100', 'thumb-active');
+                t.classList.add('border-gray-200', 'opacity-70');
+            });
+            btn.classList.remove('border-gray-200', 'opacity-70');
+            btn.classList.add('border-red-700', 'opacity-100', 'thumb-active');
+        }
+
+        // =================================================================================
+        // SCRIPT LIGHTBOX (ZOOM FOTO FULLSCREEN)
+        // =================================================================================
+        function openImageModal(src) {
+            const modal = document.getElementById('image-modal');
+            const modalImg = document.getElementById('modal-image-content');
+            
+            modalImg.src = src;
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            
+            document.body.style.overflow = 'hidden'; // Mengunci scroll body
+            
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                modal.classList.add('opacity-100');
+                modalImg.classList.remove('scale-95');
+                modalImg.classList.add('scale-100');
+            }, 10);
+        }
+
+        function closeImageModal() {
+            const modal = document.getElementById('image-modal');
+            const modalImg = document.getElementById('modal-image-content');
+            
+            modal.classList.remove('opacity-100');
+            modal.classList.add('opacity-0');
+            modalImg.classList.remove('scale-100');
+            modalImg.classList.add('scale-95');
+            
+            document.body.style.overflow = 'auto'; // Mengembalikan scroll body
+            
+            setTimeout(() => {
+                modal.classList.remove('flex');
+                modal.classList.add('hidden');
+            }, 300);
+        }
+
+        // =================================================================================
+        // SCRIPT CANVAS FOOTER
+        // =================================================================================
         const canvas = document.getElementById('footer-canvas');
         const ctx = canvas.getContext('2d');
         const footerArea = document.getElementById('kontak');
@@ -283,7 +369,6 @@ $result_related = $conn->query($sql_related);
                 if (mouse.x != null && mouse.y != null) {
                     let dx = mouse.x - this.x; let dy = mouse.y - this.y;
                     let distance = Math.sqrt(dx*dx + dy*dy);
-                    
                     if (distance < mouse.radius) {
                         let forceDirectionX = dx / distance; let forceDirectionY = dy / distance;
                         let force = (mouse.radius - distance) / mouse.radius;
@@ -306,7 +391,6 @@ $result_related = $conn->query($sql_related);
             particlesArray = [];
             let numberOfParticles = (canvas.width * canvas.height) / 9000; 
             if (window.innerWidth < 768) numberOfParticles = numberOfParticles / 2; 
-
             for (let i = 0; i < numberOfParticles; i++) {
                 let size = (Math.random() * 2) + 1; 
                 let x = Math.random() * canvas.width; let y = Math.random() * canvas.height;
@@ -322,7 +406,6 @@ $result_related = $conn->query($sql_related);
                     let dy = particlesArray[a].y - particlesArray[b].y;
                     let distance = Math.sqrt(dx*dx + dy*dy);
                     let connectDistance = window.innerWidth < 768 ? 100 : 150; 
-
                     if (distance < connectDistance) {
                         let opacityValue = 1 - (distance / connectDistance);
                         ctx.strokeStyle = 'rgba(220, 220, 220, ' + opacityValue * 0.2 + ')'; 
