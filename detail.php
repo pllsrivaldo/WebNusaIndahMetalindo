@@ -163,6 +163,62 @@ $result_related = $conn->query($sql_related);
                 </div>
             </div>
 
+            <?php
+            // Ambil 5 Produk Acak dari Database
+            $rekomendasi_produk = [];
+            $query_produk = mysqli_query($conn, "SELECT katalog_produk.*, kategori.nama_kategori FROM katalog_produk LEFT JOIN kategori ON katalog_produk.kategori = kategori.id ORDER BY RAND() LIMIT 5");
+            if($query_produk && mysqli_num_rows($query_produk) > 0) {
+                while($p = mysqli_fetch_array($query_produk)){
+                    $rekomendasi_produk[] = $p;
+                }
+            }
+            ?>
+            
+            <?php if(!empty($rekomendasi_produk)): ?>
+            <div class="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
+                <div class="flex items-center mb-6">
+                    <div class="w-1.5 h-6 bg-red-700 rounded-full mr-3"></div>
+                    <h3 class="text-xl font-black text-gray-900 uppercase tracking-tight">Rekomendasi Produk</h3>
+                </div>
+                
+                <div class="relative group" id="rek-produk-slider">
+                    
+                    <div class="relative h-56 md:h-64 rounded-xl overflow-hidden shadow-sm bg-gray-100">
+                        <?php foreach($rekomendasi_produk as $i => $rp): 
+                            $img_rp = (strpos($rp['gambar'], 'http') === 0) ? $rp['gambar'] : 'assets/uploads/' . $rp['gambar'];
+                            if(empty($rp['gambar'])) $img_rp = 'https://via.placeholder.com/400x300?text=No+Image';
+                        ?>
+                        <div class="rek-slide absolute inset-0 transition-opacity duration-700 ease-in-out <?php echo $i==0 ? 'opacity-100 z-10' : 'opacity-0 z-0'; ?>" data-index="<?php echo $i; ?>">
+                            <img src="<?php echo $img_rp; ?>" alt="<?php echo htmlspecialchars($rp['nama_produk']); ?>" class="w-full h-full object-cover">
+                            
+                            <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent flex flex-col justify-end p-5 pb-6">
+                                <h4 class="text-white font-black text-xl md:text-2xl leading-tight drop-shadow-lg"><?php echo htmlspecialchars($rp['nama_produk']); ?></h4>
+                            </div>
+                            <a href="index.php#katalog" class="absolute inset-0 z-20" title="Lihat <?php echo htmlspecialchars($rp['nama_produk']); ?>"></a>
+                        </div>
+                        <?php endforeach; ?>
+                        
+                        <?php if(count($rekomendasi_produk) > 1): ?>
+                        <button id="rek-prev" class="absolute left-2 top-1/2 -translate-y-1/2 z-30 bg-white/90 hover:bg-red-700 hover:text-white text-gray-800 w-8 h-8 rounded-full flex items-center justify-center shadow-md opacity-0 group-hover:opacity-100 transition-all duration-300 focus:outline-none">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+                        </button>
+                        <button id="rek-next" class="absolute right-2 top-1/2 -translate-y-1/2 z-30 bg-white/90 hover:bg-red-700 hover:text-white text-gray-800 w-8 h-8 rounded-full flex items-center justify-center shadow-md opacity-0 group-hover:opacity-100 transition-all duration-300 focus:outline-none">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                        </button>
+                        <?php endif; ?>
+                    </div>
+
+                    <?php if(count($rekomendasi_produk) > 1): ?>
+                    <div class="flex justify-center items-center mt-4 gap-2">
+                        <?php foreach($rekomendasi_produk as $i => $rp): ?>
+                            <button class="rek-dot transition-all duration-300 rounded-full h-2 <?php echo $i==0 ? 'w-5 bg-red-700' : 'w-2 bg-gray-300 hover:bg-gray-400'; ?>" data-index="<?php echo $i; ?>"></button>
+                        <?php endforeach; ?>
+                    </div>
+                    <?php endif; ?>
+                </div>
+            </div>
+            <?php endif; ?>
+            
             <div class="sticky top-28 bg-gray-900 rounded-2xl p-6 text-white shadow-lg border-t-4 border-red-700">
                 <h3 class="text-xl font-black mb-3 text-white">Butuh Suplai Skala Besar?</h3>
                 <p class="text-gray-400 text-sm mb-5">Konsultasikan kebutuhan proyek konstruksi Anda langsung dengan tim ahli kami untuk mendapatkan penawaran terbaik.</p>
@@ -222,5 +278,157 @@ $result_related = $conn->query($sql_related);
         <img src="assets/wa.png" alt="WhatsApp" class="w-10 h-10 object-contain transition-transform duration-300 group-hover:scale-110">
     </a>
 
+    <div id="promo-popup" class="fixed inset-0 z-[110] hidden items-center justify-center transition-opacity duration-500 opacity-0">
+        <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" onclick="closePopup()"></div>
+        
+        <div class="bg-white rounded-3xl shadow-2xl w-[90%] max-w-md relative z-10 p-6 md:p-8 pt-12 transform scale-95 transition-transform duration-500 mt-10" id="promo-card">
+            
+            <button onclick="closePopup()" class="absolute top-4 right-4 text-gray-400 hover:text-red-700 transition bg-gray-100 hover:bg-red-50 p-2 rounded-full">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+            
+            <div class="text-center">
+                <div class="w-36 h-36 mx-auto overflow-hidden absolute -top-20 left-1/2 transform -translate-x-1/2 drop-shadow-xl pointer-events-none">
+                    <img src="assets/maskot.png" alt="Promo NIM Steel" class="absolute w-[200%] h-[200%] max-w-none top-0 right-0">
+                </div>
+                
+                <h3 class="text-2xl font-black text-gray-900 mb-2 mt-4 tracking-tight">Butuh Supply Baja Ringan?</h3>
+                <p class="text-gray-600 mb-6 text-sm md:text-base leading-relaxed">
+                    Dapatkan penawaran harga pabrik terbaik dari PT Nusa Indah Metalindo untuk proyek Anda hari ini. Konsultasi gratis sekarang!
+                </p>
+                
+                <a href="<?php echo isset($data_web->link_wa) ? $data_web->link_wa : '#'; ?>&text=Halo%20SOTHO,%20saya%20ingin%20bertanya%20tentang%20penawaran%20harga%20baja%20ringan..." target="_blank" onclick="closePopup()" class="block w-full bg-[#25D366] hover:bg-[#20b858] text-white font-bold py-3.5 px-6 rounded-full shadow-lg shadow-green-600/30 transition transform hover:-translate-y-1 mb-3">
+                    Tanya Harga via WhatsApp
+                </a>
+                
+                <button onclick="closePopup()" class="text-sm font-medium text-gray-400 hover:text-gray-700 transition underline decoration-gray-300 underline-offset-4">
+                    Mungkin Nanti Saja
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ======= LOGIKA POPUP PROMO =======
+        let promoTimeout;
+        function showPopup() {
+            const closedAt = sessionStorage.getItem('promoPopupClosedAt');
+            const now = Date.now();
+            const cooldown = 3 * 60 * 1000; 
+            let delay = 10000; 
+            
+            if (closedAt) {
+                const timePassed = now - parseInt(closedAt);
+                if (timePassed < cooldown) {
+                    delay = cooldown - timePassed;
+                } else {
+                    delay = 5000; 
+                }
+            }
+
+            clearTimeout(promoTimeout); 
+            
+            promoTimeout = setTimeout(() => {
+                const popup = document.getElementById('promo-popup');
+                const card = document.getElementById('promo-card');
+                if(popup && card && popup.classList.contains('hidden')) {
+                    popup.classList.remove('hidden');
+                    popup.classList.add('flex');
+                    
+                    setTimeout(() => {
+                        popup.classList.remove('opacity-0');
+                        popup.classList.add('opacity-100');
+                        card.classList.remove('scale-95');
+                        card.classList.add('scale-100');
+                    }, 10);
+                }
+            }, delay); 
+        }
+
+        function closePopup() {
+            const popup = document.getElementById('promo-popup');
+            const card = document.getElementById('promo-card');
+            if(popup && card) {
+                popup.classList.remove('opacity-100');
+                popup.classList.add('opacity-0');
+                card.classList.remove('scale-100');
+                card.classList.add('scale-95');
+                
+                setTimeout(() => {
+                    popup.classList.remove('flex');
+                    popup.classList.add('hidden');
+                }, 500);
+            }
+            
+            sessionStorage.setItem('promoPopupClosedAt', Date.now());
+            showPopup();
+        }
+
+        window.addEventListener('load', showPopup);
+
+        // ======= LOGIKA SLIDER REKOMENDASI PRODUK =======
+        const rekSlides = document.querySelectorAll('.rek-slide');
+        const rekDots = document.querySelectorAll('.rek-dot');
+        const rekPrev = document.getElementById('rek-prev');
+        const rekNext = document.getElementById('rek-next');
+        
+        if(rekSlides.length > 1) {
+            let curRekIdx = 0;
+            let rekInterval;
+
+            function updateRekSlider(index) {
+                rekSlides.forEach((slide, i) => {
+                    if(i === index) {
+                        slide.classList.remove('opacity-0', 'z-0');
+                        slide.classList.add('opacity-100', 'z-10');
+                    } else {
+                        slide.classList.add('opacity-0', 'z-0');
+                        slide.classList.remove('opacity-100', 'z-10');
+                    }
+                });
+                rekDots.forEach((dot, i) => {
+                    if(i === index) {
+                        dot.classList.remove('w-2', 'bg-gray-300');
+                        dot.classList.add('w-5', 'bg-red-700');
+                    } else {
+                        dot.classList.add('w-2', 'bg-gray-300');
+                        dot.classList.remove('w-5', 'bg-red-700');
+                    }
+                });
+                curRekIdx = index;
+            }
+
+            function nextRek() {
+                let nextIdx = (curRekIdx + 1) % rekSlides.length;
+                updateRekSlider(nextIdx);
+            }
+
+            function prevRek() {
+                let prevIdx = (curRekIdx - 1 + rekSlides.length) % rekSlides.length;
+                updateRekSlider(prevIdx);
+            }
+
+            function startRekAuto() {
+                rekInterval = setInterval(nextRek, 3000); // Ganti gambar tiap 3 detik
+            }
+
+            function resetRekAuto() {
+                clearInterval(rekInterval);
+                startRekAuto();
+            }
+
+            if(rekNext) rekNext.addEventListener('click', () => { nextRek(); resetRekAuto(); });
+            if(rekPrev) rekPrev.addEventListener('click', () => { prevRek(); resetRekAuto(); });
+
+            rekDots.forEach((dot, i) => {
+                dot.addEventListener('click', () => {
+                    updateRekSlider(i);
+                    resetRekAuto();
+                });
+            });
+
+            startRekAuto();
+        }
+    </script>
 </body>
 </html>
