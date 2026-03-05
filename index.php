@@ -370,21 +370,27 @@ if($query_katalog && mysqli_num_rows($query_katalog) > 0) {
     
     <div id="promo-popup" class="fixed inset-0 z-[110] hidden items-center justify-center transition-opacity duration-500 opacity-0">
         <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" onclick="closePopup()"></div>
-        <div class="bg-white rounded-3xl shadow-2xl w-[90%] max-w-md relative z-10 p-6 md:p-8 pt-12 transform scale-95 transition-transform duration-500 mt-10" id="promo-card">
-            <button onclick="closePopup()" class="absolute top-4 right-4 text-gray-400 hover:text-red-700 transition bg-gray-100 hover:bg-red-50 p-2 rounded-full">
+        
+        <div class="bg-white rounded-3xl shadow-2xl w-[90%] max-w-md relative z-10 p-6 md:p-8 pt-16 mt-10 transform scale-95 transition-transform duration-500" id="promo-card">
+            
+            <div class="w-40 h-40 absolute -top-20 left-1/2 transform -translate-x-1/2 drop-shadow-xl pointer-events-none z-20">
+                <img src="assets/maskot.png" alt="Promo Spesial" class="w-full h-full object-contain">
+            </div>
+
+            <button onclick="closePopup()" class="absolute top-4 right-4 text-gray-400 hover:text-red-700 transition bg-gray-100 hover:bg-red-50 p-2 rounded-full z-30">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
             </button>
+            
             <div class="text-center">
-                <div class="w-36 h-36 mx-auto overflow-hidden absolute -top-20 left-1/2 transform -translate-x-1/2 drop-shadow-xl pointer-events-none">
-                    <img src="assets/maskot.png" alt="Promo NIM Steel" class="absolute w-[200%] h-[200%] max-w-none top-0 right-0">
-                </div>
-                <h3 class="text-2xl font-black text-gray-900 mb-2 mt-4 tracking-tight">Butuh Supply Baja Ringan?</h3>
+                <h3 class="text-2xl font-black text-gray-900 mb-2 tracking-tight">Butuh Supply Baja Ringan?</h3>
                 <p class="text-gray-600 mb-6 text-sm md:text-base leading-relaxed">
                     Dapatkan penawaran harga pabrik terbaik dari PT Nusa Indah Metalindo untuk proyek Anda hari ini. Konsultasi gratis sekarang!
                 </p>
+                
                 <a href="<?php echo isset($data_web->link_wa) ? $data_web->link_wa : '#'; ?>&text=Halo%20SOTHO,%20saya%20ingin%20bertanya%20tentang%20penawaran%20harga%20baja%20ringan..." target="_blank" onclick="closePopup()" class="block w-full bg-[#25D366] hover:bg-[#20b858] text-white font-bold py-3.5 px-6 rounded-full shadow-lg shadow-green-600/30 transition transform hover:-translate-y-1 mb-3">
                     Tanya Harga via WhatsApp
                 </a>
+                
                 <button onclick="closePopup()" class="text-sm font-medium text-gray-400 hover:text-gray-700 transition underline decoration-gray-300 underline-offset-4">
                     Mungkin Nanti Saja
                 </button>
