@@ -57,9 +57,24 @@ $result_related = $conn->query($sql_related);
         ::-webkit-scrollbar-track { background: #f1f1f1; }
         ::-webkit-scrollbar-thumb { background: #c8c8c8; border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: #b91c1c; }
+
+        /* Styling CSS khusus untuk Canvas di Footer */
+        #footer-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1; 
+            pointer-events: none; 
+        }
+        .footer-content {
+            position: relative;
+            z-index: 10;
+        }
     </style>
 </head>
-<body class="bg-white font-sans text-gray-800 flex flex-col min-h-screen">
+<body class="bg-white font-sans text-gray-800 flex flex-col min-h-screen overflow-x-hidden">
 
     <nav class="bg-white shadow-md border-b border-gray-100 sticky top-0 z-50">
         <div class="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
@@ -230,9 +245,9 @@ $result_related = $conn->query($sql_related);
     </main>
 
     <footer id="kontak" class="relative bg-red-950 text-white overflow-hidden mt-auto">
-        <div class="absolute inset-0 bg-gradient-to-br from-red-900 via-red-950 to-black opacity-95 z-0"></div>
-        
-        <div class="relative z-10 max-w-7xl mx-auto px-6 py-16">
+        <div class="absolute inset-0 bg-gradient-to-br from-red-900 via-red-950 to-black opacity-98 z-0"></div>
+        <canvas id="footer-canvas"></canvas>
+        <div class="footer-content relative z-10 max-w-7xl mx-auto px-6 py-16">
             <div class="flex flex-wrap gap-8 justify-between">
                 <?php
                 $cabang = mysqli_query($conn, "SELECT * FROM kantor_cabang ORDER BY id ASC");
@@ -240,7 +255,6 @@ $result_related = $conn->query($sql_related);
                 ?>
                 <div class="w-full sm:w-1/2 lg:w-auto flex-1 min-w-[200px]">
                     <h3 class="text-xl font-serif mb-5 text-gray-100 border-b border-red-800 pb-2 inline-block"><?php echo $c['nama_cabang']; ?></h3>
-                    
                     <?php if($c['status'] == 'aktif') { ?>
                         <p class="text-sm text-gray-300 leading-relaxed font-light mt-2 pr-4"><?php echo $c['alamat']; ?></p>
                     <?php } else { ?>
@@ -254,11 +268,9 @@ $result_related = $conn->query($sql_related);
 
         <div class="relative z-10 bg-black py-6 border-t border-red-900/50">
             <div class="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center">
-                
                 <div class="mb-4 md:mb-0 bg-white px-3 py-1 rounded-lg">
                     <img src="assets/logo.png" alt="SOTHO Logo" class="h-10" onerror="this.outerHTML='<h2 class=\'text-xl font-black text-red-700\'>SOTHO</h2>'">
                 </div>
-                
                 <div class="flex space-x-6 items-center">
                     <a href="<?php echo $data_web->link_ig; ?>" target="_blank" class="text-gray-400 hover:text-white transition duration-300 transform hover:scale-110">
                         <svg class="w-7 h-7" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
@@ -281,9 +293,9 @@ $result_related = $conn->query($sql_related);
     <div id="promo-popup" class="fixed inset-0 z-[110] hidden items-center justify-center transition-opacity duration-500 opacity-0">
         <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" onclick="closePopup()"></div>
         
-        <div class="bg-white rounded-3xl shadow-2xl w-[90%] max-w-md relative z-10 p-6 md:p-8 pt-16 mt-10 transform scale-95 transition-transform duration-500" id="promo-card">
+        <div class="bg-white rounded-3xl shadow-2xl w-[90%] max-w-md relative z-10 p-6 md:p-8 pt-28 mt-12 transform scale-95 transition-transform duration-500" id="promo-card">
             
-            <div class="w-40 h-40 absolute -top-20 left-1/2 transform -translate-x-1/2 drop-shadow-xl pointer-events-none z-20">
+            <div class="w-40 h-40 absolute -top-28 left-1/2 transform -translate-x-1/2 drop-shadow-xl pointer-events-none z-20">
                 <img src="assets/maskot.png" alt="Promo Spesial" class="w-full h-full object-contain">
             </div>
 
@@ -291,7 +303,7 @@ $result_related = $conn->query($sql_related);
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
             </button>
             
-            <div class="text-center">
+            <div class="text-center mt-4">
                 <h3 class="text-2xl font-black text-gray-900 mb-2 tracking-tight">Butuh Supply Baja Ringan?</h3>
                 <p class="text-gray-600 mb-6 text-sm md:text-base leading-relaxed">
                     Dapatkan penawaran harga pabrik terbaik dari PT Nusa Indah Metalindo untuk proyek Anda hari ini. Konsultasi gratis sekarang!
@@ -309,13 +321,17 @@ $result_related = $conn->query($sql_related);
     </div>
 
     <script>
-        // ======= LOGIKA POPUP PROMO =======
+        // =================================================================================
+        // ============ LOGIKA POPUP PROMO (BARU DITAMBAHKAN) ==============================
+        // =================================================================================
         let promoTimeout;
+        
+        // FUNGSI UNTUK MENAMPILKAN POPUP
         function showPopup() {
             const closedAt = sessionStorage.getItem('promoPopupClosedAt');
             const now = Date.now();
-            const cooldown = 3 * 60 * 1000; 
-            let delay = 10000; 
+            const cooldown = 3 * 60 * 1000; // 3 Menit jeda (Ubah di sini)
+            let delay = 10000; // 10 Detik pertama kali buka (Ubah di sini)
             
             if (closedAt) {
                 const timePassed = now - parseInt(closedAt);
@@ -327,14 +343,12 @@ $result_related = $conn->query($sql_related);
             }
 
             clearTimeout(promoTimeout); 
-            
             promoTimeout = setTimeout(() => {
                 const popup = document.getElementById('promo-popup');
                 const card = document.getElementById('promo-card');
                 if(popup && card && popup.classList.contains('hidden')) {
                     popup.classList.remove('hidden');
                     popup.classList.add('flex');
-                    
                     setTimeout(() => {
                         popup.classList.remove('opacity-0');
                         popup.classList.add('opacity-100');
@@ -345,6 +359,7 @@ $result_related = $conn->query($sql_related);
             }, delay); 
         }
 
+        // FUNGSI UNTUK MENUTUP POPUP
         function closePopup() {
             const popup = document.getElementById('promo-popup');
             const card = document.getElementById('promo-card');
@@ -353,17 +368,16 @@ $result_related = $conn->query($sql_related);
                 popup.classList.add('opacity-0');
                 card.classList.remove('scale-100');
                 card.classList.add('scale-95');
-                
                 setTimeout(() => {
                     popup.classList.remove('flex');
                     popup.classList.add('hidden');
                 }, 500);
             }
-            
             sessionStorage.setItem('promoPopupClosedAt', Date.now());
             showPopup();
         }
-
+        
+        // PANGGIL FUNGSI SAAT HALAMAN DIMUAT
         window.addEventListener('load', showPopup);
 
         // ======= LOGIKA SLIDER REKOMENDASI PRODUK =======
@@ -409,7 +423,7 @@ $result_related = $conn->query($sql_related);
             }
 
             function startRekAuto() {
-                rekInterval = setInterval(nextRek, 3000); // Ganti gambar tiap 3 detik
+                rekInterval = setInterval(nextRek, 3000); 
             }
 
             function resetRekAuto() {
@@ -417,6 +431,7 @@ $result_related = $conn->query($sql_related);
                 startRekAuto();
             }
 
+            // PERBAIKAN ERROR HANDLING: Cek apakah tombol benar-benar ada sebelum menambah listener
             if(rekNext) rekNext.addEventListener('click', () => { nextRek(); resetRekAuto(); });
             if(rekPrev) rekPrev.addEventListener('click', () => { prevRek(); resetRekAuto(); });
 
@@ -429,6 +444,155 @@ $result_related = $conn->query($sql_related);
 
             startRekAuto();
         }
+
+
+        // =================================================================================
+        // ============ JS UNTUK ANIMASI FOOTER INTERAKTIF (MENGHINDAR) =============
+        // =================================================================================
+        const canvas = document.getElementById('footer-canvas');
+        const ctx = canvas.getContext('2d');
+        const footerArea = document.getElementById('kontak');
+        
+        let particlesArray;
+        let mouse = { x: null, y: null, radius: 100 }
+
+        footerArea.addEventListener('mousemove', function(event) {
+            const rect = canvas.getBoundingClientRect();
+            mouse.x = event.clientX - rect.left;
+            mouse.y = event.clientY - rect.top;
+        });
+
+        footerArea.addEventListener('mouseout', function() {
+            mouse.x = null;
+            mouse.y = null;
+        });
+
+        class Particle {
+            constructor(x, y, directionX, directionY, size, color) {
+                this.x = x;
+                this.y = y;
+                this.baseX = this.x;
+                this.baseY = this.y;
+                this.directionX = directionX;
+                this.directionY = directionY;
+                this.size = size;
+                this.color = color;
+                this.returnSpeed = 0.05; 
+                this.pushStrength = 20; 
+            }
+            draw() {
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2, false);
+                ctx.fillStyle = this.color;
+                ctx.fill();
+            }
+            update() {
+                this.x += this.directionX;
+                this.y += this.directionY;
+                this.baseX += this.directionX;
+                this.baseY += this.directionY;
+
+                if (this.baseX > canvas.width || this.baseX < 0) this.directionX = -this.directionX;
+                if (this.baseY > canvas.height || this.baseY < 0) this.directionY = -this.directionY;
+
+                if (mouse.x != null && mouse.y != null) {
+                    let dx = mouse.x - this.x;
+                    let dy = mouse.y - this.y;
+                    let distance = Math.sqrt(dx*dx + dy*dy);
+                    
+                    if (distance < mouse.radius) {
+                        let forceDirectionX = dx / distance;
+                        let forceDirectionY = dy / distance;
+                        let force = (mouse.radius - distance) / mouse.radius;
+                        let targetX = this.x - forceDirectionX * force * this.pushStrength;
+                        let targetY = this.y - forceDirectionY * force * this.pushStrength;
+                        this.x += (targetX - this.x) * 0.1;
+                        this.y += (targetY - this.y) * 0.1;
+                    } else {
+                        if (this.x !== this.baseX) {
+                            let dxBase = this.x - this.baseX;
+                            this.x -= dxBase * this.returnSpeed;
+                        }
+                        if (this.y !== this.baseY) {
+                            let dyBase = this.y - this.baseY;
+                            this.y -= dyBase * this.returnSpeed;
+                        }
+                    }
+                } else {
+                    if (this.x !== this.baseX) {
+                        let dxBase = this.x - this.baseX;
+                        this.x -= dxBase * this.returnSpeed;
+                    }
+                    if (this.y !== this.baseY) {
+                        let dyBase = this.y - this.baseY;
+                        this.y -= dyBase * this.returnSpeed;
+                    }
+                }
+                this.draw();
+            }
+        }
+
+        function init() {
+            particlesArray = [];
+            let numberOfParticles = (canvas.width * canvas.height) / 9000; 
+            if (window.innerWidth < 768) numberOfParticles = numberOfParticles / 2; 
+
+            for (let i = 0; i < numberOfParticles; i++) {
+                let size = (Math.random() * 2) + 1; 
+                let x = Math.random() * canvas.width;
+                let y = Math.random() * canvas.height;
+                let directionX = (Math.random() * 0.2) - 0.1;
+                let directionY = (Math.random() * 0.2) - 0.1;
+                let color = 'rgba(200, 200, 200, 0.3)';
+                particlesArray.push(new Particle(x, y, directionX, directionY, size, color));
+            }
+        }
+
+        function connect() {
+            let opacityValue = 1;
+            for (let a = 0; a < particlesArray.length; a++) {
+                for (let b = a; b < particlesArray.length; b++) {
+                    let dx = particlesArray[a].x - particlesArray[b].x;
+                    let dy = particlesArray[a].y - particlesArray[b].y;
+                    let distance = Math.sqrt(dx*dx + dy*dy);
+                    let connectDistance = 150;
+                    if (window.innerWidth < 768) connectDistance = 100; 
+
+                    if (distance < connectDistance) {
+                        opacityValue = 1 - (distance / connectDistance);
+                        ctx.strokeStyle = 'rgba(220, 220, 220, ' + opacityValue * 0.2 + ')'; 
+                        ctx.lineWidth = 0.5; 
+                        ctx.beginPath();
+                        ctx.moveTo(particlesArray[a].x, particlesArray[a].y);
+                        ctx.lineTo(particlesArray[b].x, particlesArray[b].y);
+                        ctx.stroke();
+                    }
+                }
+            }
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            for (let i = 0; i < particlesArray.length; i++) {
+                particlesArray[i].update();
+            }
+            connect();
+        }
+
+        window.addEventListener('resize', function() {
+            canvas.width = footerArea.offsetWidth;
+            canvas.height = footerArea.offsetHeight;
+            mouse.radius = 100;
+            init();
+        });
+
+        window.addEventListener('load', function() {
+            canvas.width = footerArea.offsetWidth;
+            canvas.height = footerArea.offsetHeight;
+            init();
+            animate();
+        });
     </script>
 </body>
 </html>

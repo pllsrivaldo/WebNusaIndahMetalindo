@@ -18,10 +18,9 @@ if (isset($_POST['add_kategori'])) {
     echo '<script>window.location="katalog.php"</script>';
 }
 
-// --- LOGIKA HAPUS KATEGORI (TAMBAHAN PENTING) ---
+// --- LOGIKA HAPUS KATEGORI ---
 if (isset($_GET['hapus_kat'])) {
     $id_kat = $_GET['hapus_kat'];
-    // Cek dulu apakah kategori ini masih dipakai oleh produk
     $cek_produk = mysqli_query($conn, "SELECT id FROM katalog_produk WHERE kategori = '$id_kat'");
     if(mysqli_num_rows($cek_produk) > 0) {
         echo '<script>alert("Kategori gagal dihapus karena masih digunakan oleh produk!"); window.location="katalog.php"</script>';
@@ -59,6 +58,55 @@ if (isset($_POST['submit_katalog'])) {
     }
 }
 
+// --- LOGIKA UPDATE / EDIT PRODUK ---
+if (isset($_POST['update_katalog'])) {
+    $id = $_POST['id_produk'];
+    $nama = mysqli_real_escape_string($conn, $_POST['nama_produk']);
+    $kategori = mysqli_real_escape_string($conn, $_POST['kategori']);
+    $deskripsi = mysqli_real_escape_string($conn, $_POST['deskripsi']);
+    $gambar_lama = $_POST['gambar_lama'];
+
+    $filename = $_FILES['gambar']['name'];
+    $tmp_name = $_FILES['gambar']['tmp_name'];
+
+    // Jika admin mengganti gambar
+    if ($filename != '') {
+        $type1 = explode('.', $filename);
+        $type2 = strtolower(end($type1));
+        $newname = 'produk_'.time().'.'.$type2;
+        $tipe_diizinkan = array('jpg', 'jpeg', 'png', 'webp');
+
+        if(in_array($type2, $tipe_diizinkan)) {
+            // Hapus gambar lama dari folder
+            if(file_exists('../assets/uploads/'.$gambar_lama)) {
+                unlink('../assets/uploads/'.$gambar_lama);
+            }
+            // Upload gambar baru
+            move_uploaded_file($tmp_name, '../assets/uploads/'.$newname);
+            $namagambar = $newname;
+        } else {
+            echo '<script>alert("Format file tidak diizinkan! Gunakan JPG, PNG, atau WEBP."); window.location="katalog.php";</script>';
+            exit;
+        }
+    } else {
+        // Jika gambar tidak diganti, tetap gunakan nama gambar lama
+        $namagambar = $gambar_lama;
+    }
+
+    $update = mysqli_query($conn, "UPDATE katalog_produk SET 
+                                    nama_produk = '$nama', 
+                                    kategori = '$kategori', 
+                                    deskripsi = '$deskripsi', 
+                                    gambar = '$namagambar' 
+                                    WHERE id = '$id'");
+
+    if ($update) {
+        echo '<script>alert("Produk berhasil diupdate!"); window.location="katalog.php"</script>';
+    } else {
+        echo '<script>alert("Gagal mengupdate produk.")</script>';
+    }
+}
+
 // --- LOGIKA HAPUS PRODUK ---
 if (isset($_GET['hapus'])) {
     $id_hapus = $_GET['hapus'];
@@ -70,6 +118,14 @@ if (isset($_GET['hapus'])) {
     $delete = mysqli_query($conn, "DELETE FROM katalog_produk WHERE id = '$id_hapus'");
     echo '<script>alert("Produk berhasil dihapus!"); window.location="katalog.php"</script>';
 }
+
+// --- AMBIL DATA JIKA SEDANG MODE EDIT ---
+$data_edit = null;
+if (isset($_GET['edit'])) {
+    $id_edit = $_GET['edit'];
+    $query_edit = mysqli_query($conn, "SELECT * FROM katalog_produk WHERE id = '$id_edit'");
+    $data_edit = mysqli_fetch_object($query_edit);
+}
 ?>
 <!DOCTYPE html>
 <html lang="id">
@@ -78,11 +134,27 @@ if (isset($_GET['hapus'])) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Kelola Katalog - Admin NIM</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    
+    <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+    <script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
+
     <style>
         ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-track { background: #f1f1f1; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        
+        #editor-container {
+            height: 250px;
+            background-color: #f9fafb;
+            border-bottom-left-radius: 0.75rem;
+            border-bottom-right-radius: 0.75rem;
+        }
+        .ql-toolbar {
+            background-color: white;
+            border-top-left-radius: 0.75rem;
+            border-top-right-radius: 0.75rem;
+        }
     </style>
 </head>
 <body class="bg-gray-100 font-sans text-gray-800 flex h-screen overflow-hidden">
@@ -115,13 +187,13 @@ if (isset($_GET['hapus'])) {
     </aside>
 
     <div class="flex-1 flex flex-col h-screen overflow-hidden relative">
-        <header class="h-20 bg-white shadow-sm flex items-center justify-between px-8 z-10">
+        <header class="h-20 bg-white shadow-sm flex items-center justify-between px-8 z-10 shrink-0">
             <div>
                 <h2 class="text-xl font-bold text-gray-800">Kelola Katalog Produk</h2>
-                <p class="text-sm text-gray-500">Tambah atau hapus etalase produk SOTHO</p>
+                <p class="text-sm text-gray-500">Tambah, Edit, atau Hapus etalase produk SOTHO</p>
             </div>
             <div class="flex items-center bg-gray-50 px-6 py-2 rounded-full border border-gray-200">
-            <span class="font-bold text-sm text-gray-700 uppercase tracking-widest">ADMIN</span>
+                <span class="font-bold text-sm text-gray-700 uppercase tracking-widest">ADMIN</span>
             </div>
         </header>
 
@@ -129,15 +201,30 @@ if (isset($_GET['hapus'])) {
             <div class="grid grid-cols-1 xl:grid-cols-3 gap-8">
                 
                 <div class="bg-white rounded-2xl shadow-sm p-6 border border-gray-100 xl:col-span-1 h-fit">
-                    <div class="flex items-center mb-6 border-b border-gray-100 pb-4">
-                        <span class="text-xl mr-3">➕</span>
-                        <h3 class="text-lg font-bold text-gray-800">Tambah Produk Baru</h3>
+                    <div class="flex items-center justify-between mb-6 border-b border-gray-100 pb-4">
+                        <div class="flex items-center">
+                            <span class="text-xl mr-3"><?php echo ($data_edit) ? '✏️' : '➕'; ?></span>
+                            <h3 class="text-lg font-bold text-gray-800">
+                                <?php echo ($data_edit) ? 'Edit Produk' : 'Tambah Produk Baru'; ?>
+                            </h3>
+                        </div>
+                        <?php if($data_edit) { ?>
+                            <a href="katalog.php" class="text-xs font-bold text-red-600 hover:underline">Batal Edit</a>
+                        <?php } ?>
                     </div>
-                    <form action="" method="POST" enctype="multipart/form-data">
+                    
+                    <form action="" method="POST" enctype="multipart/form-data" id="formProduk">
+                        
+                        <?php if($data_edit) { ?>
+                            <input type="hidden" name="id_produk" value="<?php echo $data_edit->id; ?>">
+                            <input type="hidden" name="gambar_lama" value="<?php echo $data_edit->gambar; ?>">
+                        <?php } ?>
+
                         <div class="mb-4">
                             <label class="block text-gray-700 font-semibold mb-2 text-sm">Nama Produk</label>
-                            <input type="text" name="nama_produk" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-red-500 outline-none bg-gray-50" required placeholder="Cth: Kanal C 0.75">
+                            <input type="text" name="nama_produk" value="<?php echo ($data_edit) ? htmlspecialchars($data_edit->nama_produk) : ''; ?>" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-red-500 outline-none bg-gray-50" required placeholder="Cth: Kanal C 0.75">
                         </div>
+                        
                         <div class="mb-4">
                             <div class="flex justify-between items-center mb-2">
                                 <label class="block text-gray-700 font-semibold text-sm">Kategori</label>
@@ -148,20 +235,38 @@ if (isset($_GET['hapus'])) {
                                 <?php
                                 $kat = mysqli_query($conn, "SELECT * FROM kategori ORDER BY nama_kategori ASC");
                                 while($k = mysqli_fetch_array($kat)){
-                                    echo '<option value="'.$k['id'].'">'.$k['nama_kategori'].'</option>';
+                                    $selected = ($data_edit && $data_edit->kategori == $k['id']) ? 'selected' : '';
+                                    echo '<option value="'.$k['id'].'" '.$selected.'>'.$k['nama_kategori'].'</option>';
                                 }
                                 ?>
                             </select>
                         </div>
+                        
                         <div class="mb-4">
-                            <label class="block text-gray-700 font-semibold mb-2 text-sm">Deskripsi Keunggulan</label>
-                            <textarea name="deskripsi" rows="3" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-red-500 outline-none bg-gray-50" required placeholder="Tulis deskripsi singkat..."></textarea>
+                            <label class="block text-gray-700 font-semibold mb-2 text-sm">Deskripsi Lengkap & Keunggulan</label>
+                            <p class="text-xs text-gray-400 mb-2">Kamu bisa memasukkan teks, list, hingga foto tambahan di area bawah ini.</p>
+                            <input type="hidden" name="deskripsi" id="deskripsi_hidden">
+                            <div id="editor-container"><?php echo ($data_edit) ? $data_edit->deskripsi : ''; ?></div>
                         </div>
+
                         <div class="mb-6">
-                            <label class="block text-gray-700 font-semibold mb-2 text-sm">Upload Gambar Produk</label>
-                            <input type="file" name="gambar" class="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm bg-gray-50" required accept="image/*">
+                            <label class="block text-gray-700 font-semibold mb-2 text-sm">Upload Gambar Produk (Utama)</label>
+                            <?php if($data_edit) { ?>
+                                <p class="text-xs text-blue-600 mb-2">*Biarkan kosong jika tidak ingin mengganti gambar.</p>
+                                <div class="mb-2">
+                                    <img src="../assets/uploads/<?php echo $data_edit->gambar; ?>" class="w-24 h-24 object-cover rounded-xl border border-gray-200">
+                                </div>
+                                <input type="file" name="gambar" class="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm bg-gray-50" accept="image/*">
+                            <?php } else { ?>
+                                <input type="file" name="gambar" class="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm bg-gray-50" required accept="image/*">
+                            <?php } ?>
                         </div>
-                        <button type="submit" name="submit_katalog" class="w-full bg-gray-900 hover:bg-gray-800 text-white font-bold py-3 rounded-xl transition duration-300 shadow">Simpan Produk</button>
+                        
+                        <?php if($data_edit) { ?>
+                            <button type="submit" name="update_katalog" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition duration-300 shadow">Update Produk</button>
+                        <?php } else { ?>
+                            <button type="submit" name="submit_katalog" class="w-full bg-gray-900 hover:bg-gray-800 text-white font-bold py-3 rounded-xl transition duration-300 shadow">Simpan Produk Baru</button>
+                        <?php } ?>
                     </form>
                 </div>
 
@@ -200,7 +305,8 @@ if (isset($_GET['hapus'])) {
                                         <p class="font-bold text-gray-800 mb-1"><?php echo $row['nama_produk']; ?></p>
                                         <span class="bg-blue-50 text-blue-700 text-[10px] px-2 py-1 rounded font-bold uppercase tracking-wider"><?php echo $row['nama_kategori']; ?></span>
                                     </td>
-                                    <td class="p-4 text-center">
+                                    <td class="p-4 text-center space-y-2 md:space-y-0 md:space-x-2">
+                                        <a href="?edit=<?php echo $row['id']; ?>" class="inline-block bg-blue-50 text-blue-600 px-4 py-2 rounded-lg hover:bg-blue-600 hover:text-white text-sm font-bold transition shadow-sm">Edit</a>
                                         <a href="?hapus=<?php echo $row['id']; ?>" onclick="return confirm('Yakin ingin menghapus produk ini?')" class="inline-block bg-red-50 text-red-600 px-4 py-2 rounded-lg hover:bg-red-600 hover:text-white text-sm font-bold transition shadow-sm">Hapus</a>
                                     </td>
                                 </tr>
@@ -249,5 +355,34 @@ if (isset($_GET['hapus'])) {
             </form>
         </div>
     </div>
+
+    <script>
+        var quill = new Quill('#editor-container', {
+            theme: 'snow',
+            placeholder: 'Ketik deskripsi produk, buat daftar list, atau masukkan gambar detail di sini...',
+            modules: {
+                toolbar: [
+                    [{ 'header': [1, 2, 3, false] }],
+                    ['bold', 'italic', 'underline'],
+                    [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                    ['image', 'link'],
+                    ['clean']
+                ]
+            }
+        });
+
+        // Saat form diklik submit, copy isi HTML dari editor Quill ke input hidden
+        var form = document.querySelector('#formProduk');
+        form.onsubmit = function() {
+            var descHtml = document.querySelector('.ql-editor').innerHTML;
+            
+            if (quill.getText().trim().length === 0 && !descHtml.includes('<img')) {
+                alert("Mohon isi deskripsi produk!");
+                return false;
+            }
+            
+            document.querySelector('#deskripsi_hidden').value = descHtml;
+        };
+    </script>
 </body>
 </html>

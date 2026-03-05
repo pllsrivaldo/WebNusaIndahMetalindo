@@ -20,8 +20,24 @@ if(!$data_web) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Rekrutmen - PT Nusa Indah Metalindo</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Styling CSS khusus untuk Canvas di Footer */
+        #footer-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1; 
+            pointer-events: none; 
+        }
+        .footer-content {
+            position: relative;
+            z-index: 10;
+        }
+    </style>
 </head>
-<body class="bg-gray-50 flex flex-col min-h-screen">
+<body class="bg-gray-50 flex flex-col min-h-screen overflow-x-hidden">
 
     <nav class="bg-white shadow-md border-b border-gray-100 sticky top-0 z-50">
         <div class="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
@@ -41,7 +57,7 @@ if(!$data_web) {
         </div>
     </nav>
 
-    <div class="flex-grow flex items-center justify-center py-20 px-4">
+    <div class="flex-grow flex items-center justify-center py-20 px-4 relative z-20">
         <div class="max-w-3xl w-full bg-white rounded-3xl shadow-xl overflow-hidden border border-gray-100 p-10 md:p-16 text-center relative">
             <h2 class="text-4xl font-black text-gray-900 mb-4">Karir & <span class="text-red-700">Rekrutmen</span></h2>
             
@@ -74,10 +90,10 @@ if(!$data_web) {
         </div>
     </div>
 
-    <footer id="kontak" class="relative bg-red-950 text-white overflow-hidden mt-auto">
-        <div class="absolute inset-0 bg-gradient-to-br from-red-900 via-red-950 to-black opacity-95 z-0"></div>
-        
-        <div class="relative z-10 max-w-7xl mx-auto px-6 py-16">
+    <footer id="kontak" class="relative bg-red-950 text-white overflow-hidden mt-auto z-10">
+        <div class="absolute inset-0 bg-gradient-to-br from-red-900 via-red-950 to-black opacity-98 z-0"></div>
+        <canvas id="footer-canvas"></canvas>
+        <div class="footer-content relative z-10 max-w-7xl mx-auto px-6 py-16">
             <div class="flex flex-wrap gap-8 justify-between">
                 <?php
                 $cabang = mysqli_query($conn, "SELECT * FROM kantor_cabang ORDER BY id ASC");
@@ -123,5 +139,154 @@ if(!$data_web) {
         <img src="assets/wa.png" alt="WhatsApp" class="w-10 h-10 object-contain transition-transform duration-300 group-hover:scale-110">
     </a>
 
+    <script>
+        // =================================================================================
+        // ============ JS UNTUK ANIMASI FOOTER INTERAKTIF (MENGHINDAR) =============
+        // =================================================================================
+        const canvas = document.getElementById('footer-canvas');
+        const ctx = canvas.getContext('2d');
+        const footerArea = document.getElementById('kontak');
+        
+        let particlesArray;
+        let mouse = { x: null, y: null, radius: 100 }
+
+        footerArea.addEventListener('mousemove', function(event) {
+            const rect = canvas.getBoundingClientRect();
+            mouse.x = event.clientX - rect.left;
+            mouse.y = event.clientY - rect.top;
+        });
+
+        footerArea.addEventListener('mouseout', function() {
+            mouse.x = null;
+            mouse.y = null;
+        });
+
+        class Particle {
+            constructor(x, y, directionX, directionY, size, color) {
+                this.x = x;
+                this.y = y;
+                this.baseX = this.x;
+                this.baseY = this.y;
+                this.directionX = directionX;
+                this.directionY = directionY;
+                this.size = size;
+                this.color = color;
+                this.returnSpeed = 0.05; 
+                this.pushStrength = 20; 
+            }
+            draw() {
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2, false);
+                ctx.fillStyle = this.color;
+                ctx.fill();
+            }
+            update() {
+                this.x += this.directionX;
+                this.y += this.directionY;
+                this.baseX += this.directionX;
+                this.baseY += this.directionY;
+
+                if (this.baseX > canvas.width || this.baseX < 0) this.directionX = -this.directionX;
+                if (this.baseY > canvas.height || this.baseY < 0) this.directionY = -this.directionY;
+
+                if (mouse.x != null && mouse.y != null) {
+                    let dx = mouse.x - this.x;
+                    let dy = mouse.y - this.y;
+                    let distance = Math.sqrt(dx*dx + dy*dy);
+                    
+                    if (distance < mouse.radius) {
+                        let forceDirectionX = dx / distance;
+                        let forceDirectionY = dy / distance;
+                        let force = (mouse.radius - distance) / mouse.radius;
+                        let targetX = this.x - forceDirectionX * force * this.pushStrength;
+                        let targetY = this.y - forceDirectionY * force * this.pushStrength;
+                        this.x += (targetX - this.x) * 0.1;
+                        this.y += (targetY - this.y) * 0.1;
+                    } else {
+                        if (this.x !== this.baseX) {
+                            let dxBase = this.x - this.baseX;
+                            this.x -= dxBase * this.returnSpeed;
+                        }
+                        if (this.y !== this.baseY) {
+                            let dyBase = this.y - this.baseY;
+                            this.y -= dyBase * this.returnSpeed;
+                        }
+                    }
+                } else {
+                    if (this.x !== this.baseX) {
+                        let dxBase = this.x - this.baseX;
+                        this.x -= dxBase * this.returnSpeed;
+                    }
+                    if (this.y !== this.baseY) {
+                        let dyBase = this.y - this.baseY;
+                        this.y -= dyBase * this.returnSpeed;
+                    }
+                }
+                this.draw();
+            }
+        }
+
+        function init() {
+            particlesArray = [];
+            let numberOfParticles = (canvas.width * canvas.height) / 9000; 
+            if (window.innerWidth < 768) numberOfParticles = numberOfParticles / 2; 
+
+            for (let i = 0; i < numberOfParticles; i++) {
+                let size = (Math.random() * 2) + 1; 
+                let x = Math.random() * canvas.width;
+                let y = Math.random() * canvas.height;
+                let directionX = (Math.random() * 0.2) - 0.1;
+                let directionY = (Math.random() * 0.2) - 0.1;
+                let color = 'rgba(200, 200, 200, 0.3)';
+                particlesArray.push(new Particle(x, y, directionX, directionY, size, color));
+            }
+        }
+
+        function connect() {
+            let opacityValue = 1;
+            for (let a = 0; a < particlesArray.length; a++) {
+                for (let b = a; b < particlesArray.length; b++) {
+                    let dx = particlesArray[a].x - particlesArray[b].x;
+                    let dy = particlesArray[a].y - particlesArray[b].y;
+                    let distance = Math.sqrt(dx*dx + dy*dy);
+                    let connectDistance = 150;
+                    if (window.innerWidth < 768) connectDistance = 100; 
+
+                    if (distance < connectDistance) {
+                        opacityValue = 1 - (distance / connectDistance);
+                        ctx.strokeStyle = 'rgba(220, 220, 220, ' + opacityValue * 0.2 + ')'; 
+                        ctx.lineWidth = 0.5; 
+                        ctx.beginPath();
+                        ctx.moveTo(particlesArray[a].x, particlesArray[a].y);
+                        ctx.lineTo(particlesArray[b].x, particlesArray[b].y);
+                        ctx.stroke();
+                    }
+                }
+            }
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            for (let i = 0; i < particlesArray.length; i++) {
+                particlesArray[i].update();
+            }
+            connect();
+        }
+
+        window.addEventListener('resize', function() {
+            canvas.width = footerArea.offsetWidth;
+            canvas.height = footerArea.offsetHeight;
+            mouse.radius = 100;
+            init();
+        });
+
+        window.addEventListener('load', function() {
+            canvas.width = footerArea.offsetWidth;
+            canvas.height = footerArea.offsetHeight;
+            init();
+            animate();
+        });
+    </script>
 </body>
 </html>
