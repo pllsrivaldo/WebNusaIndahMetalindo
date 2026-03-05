@@ -67,8 +67,8 @@ if($query_katalog && mysqli_num_rows($query_katalog) > 0) {
             left: 0;
             width: 100%;
             height: 100%;
-            z-index: 1; /* Di atas gradient, di bawah teks */
-            pointer-events: none; /* Biar kursor tetap bisa nge-klik link di footer */
+            z-index: 1; 
+            pointer-events: none; 
         }
         
         /* Pastikan konten footer di atas canvas */
@@ -174,24 +174,29 @@ if($query_katalog && mysqli_num_rows($query_katalog) > 0) {
                         <h3 class="text-3xl font-black text-gray-900">Galeri <span class="text-red-700">Proyek</span></h3>
                         <p class="text-gray-500 mt-2">Bukti nyata komitmen kami memberikan kualitas produk terbaik di lapangan.</p>
                     </div>
-                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        <?php
-                        $proyek = mysqli_query($conn, "SELECT * FROM portofolio_proyek ORDER BY id DESC LIMIT 8");
-                        if(mysqli_num_rows($proyek) > 0) {
-                            while($p = mysqli_fetch_array($proyek)){
-                        ?>
-                        <div class="group relative overflow-hidden rounded-xl h-48 md:h-64 shadow-sm border border-gray-100 bg-gray-200">
-                            <img src="assets/uploads/<?php echo $p['gambar']; ?>" alt="<?php echo $p['judul']; ?>" class="w-full h-full object-cover transition duration-500 group-hover:scale-110">
-                            <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-4">
-                                <p class="text-white font-bold text-sm leading-tight"><?php echo $p['judul']; ?></p>
+                    
+                    <div class="relative">
+                        <div id="proyek-slider" class="flex overflow-x-auto snap-x snap-mandatory gap-6 pb-4 hide-scrollbar scroll-smooth px-1">
+                            <?php
+                            $proyek = mysqli_query($conn, "SELECT * FROM portofolio_proyek ORDER BY id DESC LIMIT 8");
+                            if(mysqli_num_rows($proyek) > 0) {
+                                while($p = mysqli_fetch_array($proyek)){
+                            ?>
+                            <div class="snap-start flex-none w-[85vw] md:w-[calc(50%-0.75rem)] lg:w-[calc(25%-1.125rem)] group relative overflow-hidden rounded-xl h-48 md:h-64 shadow-sm border border-gray-100 bg-gray-200">
+                                <img src="assets/uploads/<?php echo $p['gambar']; ?>" alt="<?php echo $p['judul']; ?>" class="w-full h-full object-cover transition duration-500 group-hover:scale-110">
+                                <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-4">
+                                    <p class="text-white font-bold text-sm leading-tight"><?php echo $p['judul']; ?></p>
+                                </div>
                             </div>
+                            <?php }} else { ?>
+                                <div class="w-full text-center py-10 bg-gray-50 rounded-xl border-2 border-dashed border-gray-200">
+                                    <p class="text-gray-500 text-lg">Belum ada foto proyek yang diunggah.</p>
+                                </div>
+                            <?php } ?>
                         </div>
-                        <?php }} else { ?>
-                            <div class="col-span-full text-center py-10 bg-gray-50 rounded-xl border-2 border-dashed border-gray-200">
-                                <p class="text-gray-500 text-lg">Belum ada foto proyek yang diunggah.</p>
-                            </div>
-                        <?php } ?>
+                        <div id="proyek-dots" class="flex justify-center items-center mt-6 gap-2"></div>
                     </div>
+
                 </div>
             </div>
         </section>
@@ -224,15 +229,16 @@ if($query_katalog && mysqli_num_rows($query_katalog) > 0) {
                 <?php if(!empty($katalog_all)) { ?>
                     <div class="relative group">
                         
-                        <div id="katalog-slider" class="flex overflow-x-auto snap-x snap-mandatory gap-6 pb-8 hide-scrollbar scroll-smooth px-4 -mx-4">
+                        <div id="katalog-slider" class="flex overflow-x-auto snap-x snap-mandatory gap-6 pb-4 hide-scrollbar scroll-smooth px-1">
                             <?php 
-                            $slider_items = array_slice($katalog_all, 0, 6);
+                            // Diubah jadi 8 agar slidernya ada isinya jika digeser (2 halaman x 4)
+                            $slider_items = array_slice($katalog_all, 0, 8); 
                             foreach($slider_items as $k){ 
                                 $img_kat = (strpos($k['gambar'], 'http') === 0) ? $k['gambar'] : 'assets/uploads/' . $k['gambar'];
                                 if(empty($k['gambar'])) $img_kat = 'https://via.placeholder.com/400x300?text=No+Image';
                                 $nama_kategori = !empty($k['nama_kategori']) ? $k['nama_kategori'] : 'Umum'; 
                             ?>
-                            <div class="snap-start shrink-0 w-[85vw] md:w-[350px] bg-white rounded-2xl overflow-hidden card-hover border border-gray-100 transition-all duration-300 flex flex-col shadow-sm hover:shadow-xl relative group">
+                            <div class="snap-start flex-none w-[85vw] md:w-[calc(50%-0.75rem)] lg:w-[calc(25%-1.125rem)] bg-white rounded-2xl overflow-hidden card-hover border border-gray-100 transition-all duration-300 flex flex-col shadow-sm hover:shadow-xl relative group">
                                 <div class="h-56 bg-gray-200 relative overflow-hidden">
                                     <img src="<?php echo $img_kat; ?>" alt="<?php echo htmlspecialchars($k['nama_produk']); ?>" class="w-full h-full object-cover transition duration-500 group-hover:scale-110">
                                 </div>
@@ -241,23 +247,19 @@ if($query_katalog && mysqli_num_rows($query_katalog) > 0) {
                                         <span class="bg-red-700 text-white text-[11px] font-extrabold px-4 py-1.5 rounded-full uppercase tracking-widest shadow-md border-2 border-white"><?php echo htmlspecialchars($nama_kategori); ?></span>
                                     </div>
                                     <h3 class="text-2xl font-black text-gray-900 mb-3 mt-2 leading-tight group-hover:text-red-700 transition"><?php echo htmlspecialchars($k['nama_produk']); ?></h3>
-                                    <p class="text-gray-600 mb-6 flex-1 leading-relaxed text-sm md:text-base"><?php echo htmlspecialchars(substr($k['deskripsi'], 0, 90)); ?>...</p>
+                                    <p class="text-gray-600 mb-6 flex-1 leading-relaxed text-sm md:text-base"><?php echo htmlspecialchars(substr(strip_tags($k['deskripsi']), 0, 90)); ?>...</p>
                                     <span class="text-red-700 font-bold text-sm flex items-center mt-auto">Lihat Detail <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg></span>
                                 </div>
                                 <a href="detail-produk.php?id=<?php echo $k['id']; ?>" class="absolute inset-0 z-20"></a>
                             </div>
                             <?php } ?>
                         </div>
+                        
+                        <div id="katalog-dots" class="flex justify-center items-center mt-8 gap-2"></div>
 
-                        <button onclick="scrollKatalog(-1)" class="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 md:-translate-x-6 z-10 bg-white hover:bg-red-700 hover:text-white text-gray-800 w-12 h-12 rounded-full flex items-center justify-center shadow-lg border border-gray-100 transition-all duration-300 focus:outline-none hidden md:flex">
-                            <svg class="w-6 h-6 ml-[-2px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
-                        </button>
-                        <button onclick="scrollKatalog(1)" class="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 md:translate-x-6 z-10 bg-white hover:bg-red-700 hover:text-white text-gray-800 w-12 h-12 rounded-full flex items-center justify-center shadow-lg border border-gray-100 transition-all duration-300 focus:outline-none hidden md:flex">
-                            <svg class="w-6 h-6 mr-[-2px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
-                        </button>
                     </div>
 
-                    <div class="text-center mt-6">
+                    <div class="text-center mt-10">
                         <button onclick="openKatalogModal()" class="inline-flex items-center justify-center bg-gray-900 hover:bg-gray-800 text-white font-bold py-3.5 px-8 rounded-full shadow-lg transition-all transform hover:-translate-y-1 group">
                             Lihat Semua Produk
                             <svg class="w-5 h-5 ml-2 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path></svg>
@@ -337,9 +339,7 @@ if($query_katalog && mysqli_num_rows($query_katalog) > 0) {
 
     <footer id="kontak" class="relative bg-red-950 text-white overflow-hidden mt-auto">
         <div class="absolute inset-0 bg-gradient-to-br from-red-900 via-red-950 to-black opacity-98 z-0"></div>
-        
         <canvas id="footer-canvas"></canvas>
-        
         <div class="footer-content relative z-10 max-w-7xl mx-auto px-6 py-16">
             <div class="flex flex-wrap gap-8 justify-between">
                 <?php
@@ -348,7 +348,6 @@ if($query_katalog && mysqli_num_rows($query_katalog) > 0) {
                 ?>
                 <div class="w-full sm:w-1/2 lg:w-auto flex-1 min-w-[200px]">
                     <h3 class="text-xl font-serif mb-5 text-gray-100 border-b border-red-800 pb-2 inline-block"><?php echo $c['nama_cabang']; ?></h3>
-                    
                     <?php if($c['status'] == 'aktif') { ?>
                         <p class="text-sm text-gray-300 leading-relaxed font-light mt-2 pr-4"><?php echo $c['alamat']; ?></p>
                     <?php } else { ?>
@@ -362,11 +361,9 @@ if($query_katalog && mysqli_num_rows($query_katalog) > 0) {
 
         <div class="relative z-10 bg-black py-6 border-t border-red-900/50">
             <div class="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center">
-                
                 <div class="mb-4 md:mb-0 bg-white px-3 py-1 rounded-lg">
                     <img src="assets/logo.png" alt="SOTHO Logo" class="h-10" onerror="this.outerHTML='<h2 class=\'text-xl font-black text-red-700\'>SOTHO</h2>'">
                 </div>
-                
                 <div class="flex space-x-6 items-center">
                     <a href="<?php echo $data_web->link_ig; ?>" target="_blank" class="text-gray-400 hover:text-white transition duration-300 transform hover:scale-110">
                         <svg class="w-7 h-7" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
@@ -446,7 +443,7 @@ if($query_katalog && mysqli_num_rows($query_katalog) > 0) {
                                 <span class="bg-red-700 text-white text-[10px] font-extrabold px-3 py-1 rounded-full uppercase tracking-widest shadow-md border-2 border-white"><?php echo htmlspecialchars($nama_kategori); ?></span>
                             </div>
                             <h3 class="text-lg font-black text-gray-900 mb-2 mt-2 leading-tight group-hover:text-red-700 transition"><?php echo htmlspecialchars($k['nama_produk']); ?></h3>
-                            <p class="text-gray-600 text-sm mb-5 flex-1 leading-relaxed"><?php echo htmlspecialchars(substr($k['deskripsi'], 0, 80)); ?>...</p>
+                            <p class="text-gray-600 text-sm mb-5 flex-1 leading-relaxed"><?php echo htmlspecialchars(substr(strip_tags($k['deskripsi']), 0, 80)); ?>...</p>
                             
                             <a href="detail-produk.php?id=<?php echo $k['id']; ?>" class="text-center w-full bg-gray-50 hover:bg-red-700 hover:text-white text-red-700 font-bold py-2.5 rounded-xl border border-red-100 hover:border-red-700 transition-colors text-sm shadow-sm relative z-30">Lihat Detail Produk</a>
                         </div>
@@ -491,7 +488,6 @@ if($query_katalog && mysqli_num_rows($query_katalog) > 0) {
                     clearInterval(interval);
                     progressImg.style.clipPath = `inset(0% 0 0 0)`;
                     progressText.innerText = `100%`;
-                    
                     setTimeout(() => { if(callback) callback(); }, 300); 
                 } else {
                     progressImg.style.clipPath = `inset(${100 - progress}% 0 0 0)`;
@@ -561,6 +557,70 @@ if($query_katalog && mysqli_num_rows($query_katalog) > 0) {
         initSlider('.hero-slide', 4000);
         initSlider('.tentang-slide', 4000);
 
+        // ==========================================
+        // FUNGSI UNTUK MEMBUAT PENTOL SLIDER
+        // ==========================================
+        function initSliderDots(sliderId, dotsId) {
+            const slider = document.getElementById(sliderId);
+            const dotsContainer = document.getElementById(dotsId);
+            if (!slider || !dotsContainer) return;
+
+            const items = Array.from(slider.children);
+            if (items.length === 0) return;
+
+            // Generate pentol
+            dotsContainer.innerHTML = '';
+            const dots = [];
+            items.forEach((item, i) => {
+                const dot = document.createElement('button');
+                dot.className = 'transition-all duration-300 rounded-full h-2.5 w-2.5 bg-gray-300 focus:outline-none';
+                dot.onclick = () => {
+                    // Geser ke gambar yang diklik
+                    item.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'start' });
+                };
+                dotsContainer.appendChild(dot);
+                dots.push(dot);
+            });
+
+            // Beri warna merah pada pentol pertama
+            if(dots.length > 0) {
+                dots[0].classList.remove('w-2.5', 'bg-gray-300');
+                dots[0].classList.add('w-8', 'bg-red-700');
+            }
+
+            // Fungsi untuk update pentol saat digeser
+            slider.addEventListener('scroll', () => {
+                let closestIndex = 0;
+                let minDiff = Infinity;
+                
+                // Cari gambar mana yang paling tengah posisinya
+                items.forEach((item, i) => {
+                    let diff = Math.abs(item.offsetLeft - slider.offsetLeft - slider.scrollLeft);
+                    if (diff < minDiff) {
+                        minDiff = diff;
+                        closestIndex = i;
+                    }
+                });
+
+                // Update warna pentol
+                dots.forEach((dot, i) => {
+                    if (i === closestIndex) {
+                        dot.classList.remove('w-2.5', 'bg-gray-300');
+                        dot.classList.add('w-8', 'bg-red-700');
+                    } else {
+                        dot.classList.add('w-2.5', 'bg-gray-300');
+                        dot.classList.remove('w-8', 'bg-red-700');
+                    }
+                });
+            });
+        }
+
+        // Panggil fungsi pembuat pentol saat halaman selesai dimuat
+        window.addEventListener('load', () => {
+            initSliderDots('proyek-slider', 'proyek-dots');
+            initSliderDots('katalog-slider', 'katalog-dots');
+        });
+
         // POPUP PROMO
         let promoTimeout;
         function showPopup() {
@@ -613,24 +673,13 @@ if($query_katalog && mysqli_num_rows($query_katalog) > 0) {
         }
         window.addEventListener('load', showPopup);
 
-        // ================= JS SLIDER KATALOG & MODAL =================
-        function scrollKatalog(dir) {
-            const slider = document.getElementById('katalog-slider');
-            if(slider) {
-                const scrollAmount = window.innerWidth > 768 ? 374 : window.innerWidth * 0.85; 
-                slider.scrollBy({ left: dir * scrollAmount, behavior: 'smooth' });
-            }
-        }
-
         function openKatalogModal() {
             const modal = document.getElementById('katalog-modal');
             const card = document.getElementById('katalog-modal-card');
             if(modal && card) {
                 modal.classList.remove('hidden');
                 modal.classList.add('flex');
-                
                 document.body.style.overflow = 'hidden'; 
-
                 setTimeout(() => {
                     modal.classList.remove('opacity-0');
                     modal.classList.add('opacity-100');
@@ -648,9 +697,7 @@ if($query_katalog && mysqli_num_rows($query_katalog) > 0) {
                 modal.classList.add('opacity-0');
                 card.classList.remove('scale-100');
                 card.classList.add('scale-95');
-                
                 document.body.style.overflow = 'auto';
-
                 setTimeout(() => {
                     modal.classList.remove('flex');
                     modal.classList.add('hidden');
@@ -659,159 +706,88 @@ if($query_katalog && mysqli_num_rows($query_katalog) > 0) {
         }
 
         // =================================================================================
-        // ============ BARU: JS UNTUK ANIMASI FOOTER INTERAKTIF (MENGHINDAR) =============
+        // ============ JS UNTUK ANIMASI FOOTER INTERAKTIF (MENGHINDAR) =============
         // =================================================================================
         const canvas = document.getElementById('footer-canvas');
         const ctx = canvas.getContext('2d');
-        const footer = id="kontak"; // Target section footer
-
-        let particlesArray;
-        let mouse = {
-            x: null,
-            y: null,
-            radius: 100 // Radius area 'ketakutan' titik terhadap mouse
-        }
-
-        // Lacak posisi mouse hanya saat di atas footer
         const footerArea = document.getElementById('kontak');
+        
+        let particlesArray;
+        let mouse = { x: null, y: null, radius: 100 }
+
         footerArea.addEventListener('mousemove', function(event) {
             const rect = canvas.getBoundingClientRect();
-            // Hitung posisi mouse RELATIF terhadap canvas footer, bukan layar
             mouse.x = event.clientX - rect.left;
             mouse.y = event.clientY - rect.top;
         });
 
-        footerArea.addEventListener('mouseout', function() {
-            mouse.x = null;
-            mouse.y = null;
-        });
+        footerArea.addEventListener('mouseout', function() { mouse.x = null; mouse.y = null; });
 
-        // Membuat objek Titik (Particle)
         class Particle {
             constructor(x, y, directionX, directionY, size, color) {
-                this.x = x;
-                this.y = y;
-                // Posisi dasar (tempat kembali)
-                this.baseX = this.x;
-                this.baseY = this.y;
-                this.directionX = directionX;
-                this.directionY = directionY;
-                this.size = size;
-                this.color = color;
-                // Kecepatan kembali ke posisi semula
-                this.returnSpeed = 0.05; 
-                // Kekuatan dorongan mouse (semakin besar semakin jauh menghindar)
-                this.pushStrength = 20; 
+                this.x = x; this.y = y; this.baseX = this.x; this.baseY = this.y;
+                this.directionX = directionX; this.directionY = directionY;
+                this.size = size; this.color = color;
+                this.returnSpeed = 0.05; this.pushStrength = 20; 
             }
-            // Menggambar titik
             draw() {
-                ctx.beginPath();
-                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2, false);
-                ctx.fillStyle = this.color;
-                ctx.fill();
+                ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2, false);
+                ctx.fillStyle = this.color; ctx.fill();
             }
-            // Update posisi titik (logika gerak & menghindar)
             update() {
-                // Gerakan dasar mengambang lambat
-                this.x += this.directionX;
-                this.y += this.directionY;
-                
-                // Update posisi dasar agar ikutan mengambang pelan
-                this.baseX += this.directionX;
-                this.baseY += this.directionY;
+                this.x += this.directionX; this.y += this.directionY;
+                this.baseX += this.directionX; this.baseY += this.directionY;
 
-                // Pantulan jika menabrak batas canvas
                 if (this.baseX > canvas.width || this.baseX < 0) this.directionX = -this.directionX;
                 if (this.baseY > canvas.height || this.baseY < 0) this.directionY = -this.directionY;
 
-                // --- LOGIKA INTERAKSI MOUSE (MENGHINDAR) ---
                 if (mouse.x != null && mouse.y != null) {
-                    let dx = mouse.x - this.x;
-                    let dy = mouse.y - this.y;
+                    let dx = mouse.x - this.x; let dy = mouse.y - this.y;
                     let distance = Math.sqrt(dx*dx + dy*dy);
                     
-                    // Jika mouse mendekat dalam radius
                     if (distance < mouse.radius) {
-                        // Hitung vektor arah menjauh dari mouse
-                        let forceDirectionX = dx / distance;
-                        let forceDirectionY = dy / distance;
-                        
-                        // Hitung kekuatan dorongan berdasarkan jarak (makin dekat makin kuat)
+                        let forceDirectionX = dx / distance; let forceDirectionY = dy / distance;
                         let force = (mouse.radius - distance) / mouse.radius;
-                        
-                        // Tentukan posisi target menjauh
                         let targetX = this.x - forceDirectionX * force * this.pushStrength;
                         let targetY = this.y - forceDirectionY * force * this.pushStrength;
-
-                        // Gerakkan titik ke posisi menghindar (gunakan lerp agar halus)
-                        this.x += (targetX - this.x) * 0.1;
-                        this.y += (targetY - this.y) * 0.1;
+                        this.x += (targetX - this.x) * 0.1; this.y += (targetY - this.y) * 0.1;
                     } else {
-                        // Jika mouse jauh, kembali pelan-pelan ke posisi dasar
-                        if (this.x !== this.baseX) {
-                            let dxBase = this.x - this.baseX;
-                            this.x -= dxBase * this.returnSpeed;
-                        }
-                        if (this.y !== this.baseY) {
-                            let dyBase = this.y - this.baseY;
-                            this.y -= dyBase * this.returnSpeed;
-                        }
+                        if (this.x !== this.baseX) { this.x -= (this.x - this.baseX) * this.returnSpeed; }
+                        if (this.y !== this.baseY) { this.y -= (this.y - this.baseY) * this.returnSpeed; }
                     }
                 } else {
-                    // Mouse tidak ada di footer, pastikan kembali ke posisi dasar
-                    if (this.x !== this.baseX) {
-                        let dxBase = this.x - this.baseX;
-                        this.x -= dxBase * this.returnSpeed;
-                    }
-                    if (this.y !== this.baseY) {
-                        let dyBase = this.y - this.baseY;
-                        this.y -= dyBase * this.returnSpeed;
-                    }
+                    if (this.x !== this.baseX) { this.x -= (this.x - this.baseX) * this.returnSpeed; }
+                    if (this.y !== this.baseY) { this.y -= (this.y - this.baseY) * this.returnSpeed; }
                 }
-
                 this.draw();
             }
         }
 
-        // Inisialisasi array titik
         function init() {
             particlesArray = [];
-            // Menyesuaikan jumlah titik berdasarkan luas canvas agar tidak terlalu sepi/rame
             let numberOfParticles = (canvas.width * canvas.height) / 9000; 
-            if (window.innerWidth < 768) numberOfParticles = numberOfParticles / 2; // Lebih sedikit di hp
+            if (window.innerWidth < 768) numberOfParticles = numberOfParticles / 2; 
 
             for (let i = 0; i < numberOfParticles; i++) {
-                let size = (Math.random() * 2) + 1; // Ukuran titik 1-3px
-                let x = Math.random() * canvas.width;
-                let y = Math.random() * canvas.height;
-                // Kecepatan gerak dasar sangat lambat (0.1 - 0.3)
-                let directionX = (Math.random() * 0.2) - 0.1;
-                let directionY = (Math.random() * 0.2) - 0.1;
-                // Warna abu-abu terang transparan
-                let color = 'rgba(200, 200, 200, 0.3)';
-
-                particlesArray.push(new Particle(x, y, directionX, directionY, size, color));
+                let size = (Math.random() * 2) + 1; 
+                let x = Math.random() * canvas.width; let y = Math.random() * canvas.height;
+                let directionX = (Math.random() * 0.2) - 0.1; let directionY = (Math.random() * 0.2) - 0.1;
+                particlesArray.push(new Particle(x, y, directionX, directionY, size, 'rgba(200, 200, 200, 0.3)'));
             }
         }
 
-        // Menghubungkan titik-titik terdekat dengan garis
         function connect() {
-            let opacityValue = 1;
             for (let a = 0; a < particlesArray.length; a++) {
                 for (let b = a; b < particlesArray.length; b++) {
                     let dx = particlesArray[a].x - particlesArray[b].x;
                     let dy = particlesArray[a].y - particlesArray[b].y;
                     let distance = Math.sqrt(dx*dx + dy*dy);
-
-                    // Jarak maksimum antar titik untuk digambar garis (makin besar makin ruwet)
-                    let connectDistance = 150;
-                    if (window.innerWidth < 768) connectDistance = 100; // Lebih pendek di hp
+                    let connectDistance = window.innerWidth < 768 ? 100 : 150; 
 
                     if (distance < connectDistance) {
-                        // Opacity garis memudar berdasarkan jarak (makin jauh makin hilang)
-                        opacityValue = 1 - (distance / connectDistance);
-                        ctx.strokeStyle = 'rgba(220, 220, 220, ' + opacityValue * 0.2 + ')'; // Gunakan opacity rendah (0.2)
-                        ctx.lineWidth = 0.5; // Garis sangat tipis
+                        let opacityValue = 1 - (distance / connectDistance);
+                        ctx.strokeStyle = 'rgba(220, 220, 220, ' + opacityValue * 0.2 + ')'; 
+                        ctx.lineWidth = 0.5; 
                         ctx.beginPath();
                         ctx.moveTo(particlesArray[a].x, particlesArray[a].y);
                         ctx.lineTo(particlesArray[b].x, particlesArray[b].y);
@@ -821,19 +797,13 @@ if($query_katalog && mysqli_num_rows($query_katalog) > 0) {
             }
         }
 
-        // Loop Animasi
         function animate() {
             requestAnimationFrame(animate);
-            // Bersihkan canvas setiap frame
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-            for (let i = 0; i < particlesArray.length; i++) {
-                particlesArray[i].update();
-            }
+            for (let i = 0; i < particlesArray.length; i++) { particlesArray[i].update(); }
             connect();
         }
 
-        // Handle Resize Jendela
         window.addEventListener('resize', function() {
             canvas.width = footerArea.offsetWidth;
             canvas.height = footerArea.offsetHeight;
@@ -841,15 +811,12 @@ if($query_katalog && mysqli_num_rows($query_katalog) > 0) {
             init();
         });
 
-        // Mulai Inisialisasi & Animasi
-        // Pastikan ukuran canvas sesuai dengan section footer saat load
         window.addEventListener('load', function() {
             canvas.width = footerArea.offsetWidth;
             canvas.height = footerArea.offsetHeight;
             init();
             animate();
         });
-        // =================================================================================
     </script>
 </body>
 </html>
