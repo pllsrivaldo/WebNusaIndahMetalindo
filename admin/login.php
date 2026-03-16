@@ -39,10 +39,16 @@ include '../koneksi.php'; // Memanggil koneksi database dari folder luar
             
             if (mysqli_num_rows($cek) > 0) {
                 $d = mysqli_fetch_object($cek);
-                $_SESSION['status_login'] = true;
-                $_SESSION['admin_global'] = $d;
-                $_SESSION['id'] = $d->id;
-                echo '<script>window.location="index.php"</script>';
+                
+                // CEK STATUS: Tolak jika status nonaktif
+                if (isset($d->status) && $d->status == 'nonaktif') {
+                    echo '<div class="mt-4 p-3 bg-red-100 border border-red-300 text-red-700 rounded-lg text-center font-semibold">Akses Ditolak! Akun Anda telah dinonaktifkan oleh Host.</div>';
+                } else {
+                    $_SESSION['status_login'] = true;
+                    $_SESSION['admin_global'] = $d;
+                    $_SESSION['id'] = $d->id;
+                    echo '<script>window.location="index.php"</script>';
+                }
             } else {
                 echo '<div class="mt-4 p-3 bg-red-100 text-red-700 rounded-lg text-center">Username atau password salah!</div>';
             }
