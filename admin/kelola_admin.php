@@ -16,14 +16,21 @@ if(mysqli_num_rows($cek_kolom) == 0) {
 if (isset($_POST['submit_admin'])) {
     $nama_lengkap = mysqli_real_escape_string($conn, $_POST['nama_lengkap']);
     $username = mysqli_real_escape_string($conn, $_POST['username']);
-    $password = md5($_POST['password']);
+    $password_raw = $_POST['password'];
+    $password_konf = $_POST['password_konfirmasi'];
 
-    $cek_user = mysqli_query($conn, "SELECT username FROM admin WHERE username = '$username'");
-    if(mysqli_num_rows($cek_user) > 0) {
-        echo '<script>alert("Username sudah digunakan. Pilih yang lain.");</script>';
+    // Validasi Konfirmasi Password
+    if ($password_raw !== $password_konf) {
+        echo '<script>alert("Gagal! Password dan Konfirmasi Password tidak sama. Silakan ulangi.");</script>';
     } else {
-        $insert = mysqli_query($conn, "INSERT INTO admin (nama_lengkap, username, password, status) VALUES ('$nama_lengkap', '$username', '$password', 'aktif')");
-        if ($insert) { echo '<script>alert("Admin baru berhasil ditambahkan!"); window.location="kelola_admin.php"</script>'; }
+        $password = md5($password_raw);
+        $cek_user = mysqli_query($conn, "SELECT username FROM admin WHERE username = '$username'");
+        if(mysqli_num_rows($cek_user) > 0) {
+            echo '<script>alert("Username sudah digunakan. Pilih yang lain.");</script>';
+        } else {
+            $insert = mysqli_query($conn, "INSERT INTO admin (nama_lengkap, username, password, status) VALUES ('$nama_lengkap', '$username', '$password', 'aktif')");
+            if ($insert) { echo '<script>alert("Admin baru berhasil ditambahkan!"); window.location="kelola_admin.php"</script>'; }
+        }
     }
 }
 
@@ -33,30 +40,36 @@ if (isset($_POST['submit_edit_admin'])) {
     $nama_lengkap = mysqli_real_escape_string($conn, $_POST['nama_lengkap']);
     $username = mysqli_real_escape_string($conn, $_POST['username']);
     $password_raw = $_POST['password'];
+    $password_konf = $_POST['password_konfirmasi'];
 
     // Cek apakah username dipakai oleh admin lain (selain dirinya sendiri)
     $cek_user = mysqli_query($conn, "SELECT id FROM admin WHERE username = '$username' AND id != $id_edit");
     if(mysqli_num_rows($cek_user) > 0) {
         echo '<script>alert("Gagal! Username tersebut sudah dipakai admin lain.");</script>';
     } else {
-        if (empty($password_raw)) {
-            // Update TANPA ganti password
-            $update = mysqli_query($conn, "UPDATE admin SET nama_lengkap = '$nama_lengkap', username = '$username' WHERE id = $id_edit");
+        // Validasi Konfirmasi Password jika password baru diisi
+        if (!empty($password_raw) && $password_raw !== $password_konf) {
+            echo '<script>alert("Gagal! Password Baru dan Konfirmasi Password tidak sama. Silakan ulangi.");</script>';
         } else {
-            // Update DENGAN password baru
-            $pass_hashed = md5($password_raw);
-            $update = mysqli_query($conn, "UPDATE admin SET nama_lengkap = '$nama_lengkap', username = '$username', password = '$pass_hashed' WHERE id = $id_edit");
-        }
-        
-        if ($update) {
-            // Jika Host mengedit akunnya sendiri, perbarui data sesi agar nama di Header langsung berubah
-            if ($id_edit == $_SESSION['id']) {
-                $_SESSION['admin_global']->nama_lengkap = $nama_lengkap;
-                $_SESSION['admin_global']->username = $username;
+            if (empty($password_raw)) {
+                // Update TANPA ganti password
+                $update = mysqli_query($conn, "UPDATE admin SET nama_lengkap = '$nama_lengkap', username = '$username' WHERE id = $id_edit");
+            } else {
+                // Update DENGAN password baru
+                $pass_hashed = md5($password_raw);
+                $update = mysqli_query($conn, "UPDATE admin SET nama_lengkap = '$nama_lengkap', username = '$username', password = '$pass_hashed' WHERE id = $id_edit");
             }
-            echo '<script>alert("Data admin berhasil diperbarui!"); window.location="kelola_admin.php"</script>';
-        } else {
-            echo '<script>alert("Terjadi kesalahan sistem database.");</script>';
+            
+            if ($update) {
+                // Jika Host mengedit akunnya sendiri, perbarui data sesi agar nama di Header langsung berubah
+                if ($id_edit == $_SESSION['id']) {
+                    $_SESSION['admin_global']->nama_lengkap = $nama_lengkap;
+                    $_SESSION['admin_global']->username = $username;
+                }
+                echo '<script>alert("Data admin berhasil diperbarui!"); window.location="kelola_admin.php"</script>';
+            } else {
+                echo '<script>alert("Terjadi kesalahan sistem database.");</script>';
+            }
         }
     }
 }
@@ -173,10 +186,20 @@ if (isset($_GET['hapus'])) {
                             <label class="block text-gray-700 font-semibold mb-2 text-sm">Username Login</label>
                             <input type="text" name="username" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-yellow-500 outline-none bg-white" value="<?php echo htmlspecialchars($data_edit['username']); ?>" required>
                         </div>
-                        <div class="mb-6">
+                        <div class="mb-4 relative">
                             <label class="block text-gray-700 font-semibold mb-2 text-sm">Password Baru</label>
-                            <input type="password" name="password" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-yellow-500 outline-none bg-white" placeholder="Kosongkan jika sandi tidak diubah">
-                            <p class="text-xs text-gray-500 mt-2">*Biarkan kosong jika hanya merubah nama/username.</p>
+                            <input type="password" name="password" id="pass_edit" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-yellow-500 outline-none bg-white pr-12" placeholder="Sandi baru">
+                            <button type="button" onclick="togglePassword('pass_edit', 'eye_edit')" class="absolute right-4 top-[38px] text-gray-500 hover:text-gray-700">
+                                <span id="eye_edit">👁️</span>
+                            </button>
+                        </div>
+                        <div class="mb-6 relative">
+                            <label class="block text-gray-700 font-semibold mb-2 text-sm">Konfirmasi Password Baru</label>
+                            <input type="password" name="password_konfirmasi" id="pass_konf_edit" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-yellow-500 outline-none bg-white pr-12" placeholder="Ulangi sandi baru">
+                            <button type="button" onclick="togglePassword('pass_konf_edit', 'eye_konf_edit')" class="absolute right-4 top-[38px] text-gray-500 hover:text-gray-700">
+                                <span id="eye_konf_edit">👁️</span>
+                            </button>
+                            <p class="text-xs text-gray-500 mt-2">*Biarkan kedua kolom password kosong jika tidak ingin mengubah sandi.</p>
                         </div>
                         <button type="submit" name="submit_edit_admin" class="w-full bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-3 rounded-xl shadow transition">Simpan Perubahan</button>
                     </form>
@@ -190,15 +213,25 @@ if (isset($_GET['hapus'])) {
                     <form action="" method="POST">
                         <div class="mb-4">
                             <label class="block text-gray-700 font-semibold mb-2 text-sm">Nama Lengkap</label>
-                            <input type="text" name="nama_lengkap" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-red-500 outline-none bg-gray-50" required placeholder="Nama Lengkap">
+                            <input type="text" name="nama_lengkap" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-red-500 outline-none bg-gray-50" required placeholder="Cth: Vincent Pratama">
                         </div>
                         <div class="mb-4">
                             <label class="block text-gray-700 font-semibold mb-2 text-sm">Username Login</label>
                             <input type="text" name="username" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-red-500 outline-none bg-gray-50" required placeholder="Gunakan huruf kecil tanpa spasi">
                         </div>
-                        <div class="mb-6">
+                        <div class="mb-4 relative">
                             <label class="block text-gray-700 font-semibold mb-2 text-sm">Password</label>
-                            <input type="password" name="password" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-red-500 outline-none bg-gray-50" required placeholder="Minimal 6 karakter">
+                            <input type="password" name="password" id="pass_tambah" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-red-500 outline-none bg-gray-50 pr-12" required placeholder="Minimal 6 karakter">
+                            <button type="button" onclick="togglePassword('pass_tambah', 'eye_tambah')" class="absolute right-4 top-[38px] text-gray-500 hover:text-gray-700">
+                                <span id="eye_tambah">👁️</span>
+                            </button>
+                        </div>
+                        <div class="mb-6 relative">
+                            <label class="block text-gray-700 font-semibold mb-2 text-sm">Konfirmasi Password</label>
+                            <input type="password" name="password_konfirmasi" id="pass_konf_tambah" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-red-500 outline-none bg-gray-50 pr-12" required placeholder="Ulangi password">
+                            <button type="button" onclick="togglePassword('pass_konf_tambah', 'eye_konf_tambah')" class="absolute right-4 top-[38px] text-gray-500 hover:text-gray-700">
+                                <span id="eye_konf_tambah">👁️</span>
+                            </button>
                         </div>
                         <button type="submit" name="submit_admin" class="w-full bg-gray-900 hover:bg-gray-800 text-white font-bold py-3 rounded-xl shadow transition">Tambahkan Admin</button>
                     </form>
@@ -265,5 +298,19 @@ if (isset($_GET['hapus'])) {
             </div>
         </main>
     </div>
+
+    <script>
+        function togglePassword(inputId, iconId) {
+            const input = document.getElementById(inputId);
+            const icon = document.getElementById(iconId);
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.textContent = '🙈'; // Ikon mata tertutup saat password terlihat
+            } else {
+                input.type = 'password';
+                icon.textContent = '👁️'; // Ikon mata terbuka saat password disembunyikan
+            }
+        }
+    </script>
 </body>
 </html>
